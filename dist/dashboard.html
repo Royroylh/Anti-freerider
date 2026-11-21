@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Anti-freerider project workspace: task planning, anonymous acceptance, contribution evidence, and closing reports."
+    >
+    <title>Project workspace | Anti-freerider</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Cpath d='M18 44 29 18h6l11 26h-7l-2-6H27l-2 6Zm11-12h6l-3-8Z' fill='%235eead4'/%3E%3C/svg%3E"
+    >
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="assets/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="project-sidebar" aria-label="Project overview">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">AF</span>
+          <span>Anti-freerider</span>
+          <span class="version-badge">Workspace v1.0</span>
+        </div>
+
+        <section class="project-overview" aria-labelledby="projects-title">
+          <div class="sidebar-heading">
+            <div>
+              <p class="eyebrow">Workspace</p>
+              <h2 id="projects-title">Project overview</h2>
+            </div>
+            <span class="project-count" id="project-count">0</span>
+          </div>
+
+          <nav class="project-list" id="project-list" aria-label="Your projects"></nav>
+
+          <div class="sidebar-actions">
+            <button class="new-project" type="button" id="new-project-button">+ New project</button>
+            <button class="new-project" type="button" id="join-project-button">Join with code</button>
+          </div>
+        </section>
+
+        <div class="profile-card">
+          <span class="avatar" id="profile-avatar" aria-hidden="true">--</span>
+          <span class="profile-copy">
+            <strong id="profile-name">Loading…</strong>
+            <small id="profile-role">Student member</small>
+          </span>
+          <button class="text-button" type="button" id="signout-button">Sign out</button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <div id="global-error" class="page-alert" role="alert" hidden></div>
+
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">Active project</p>
+            <h1 id="project-title">Loading workspace…</h1>
+            <p class="header-copy" id="project-description">Fetching your projects from the local server.</p>
+          </div>
+          <div class="header-meta">
+            <div class="avatar-stack" id="avatar-stack" aria-label="Project members"></div>
+            <div class="header-actions">
+              <button class="outline-button assistant-trigger" type="button" id="assistant-button" disabled
+                      aria-expanded="false" aria-controls="assistant-panel" title="Ask project assistant">Ask assistant</button>
+              <button class="outline-button" type="button" id="settings-button" disabled>Project settings</button>
+              <button class="outline-button" type="button" id="add-task-button" disabled>+ Task</button>
+            </div>
+          </div>
+        </header>
+
+        <section class="empty-workspace" id="empty-state" hidden aria-labelledby="empty-title">
+          <div class="empty-state-copy">
+            <p class="eyebrow">First team</p>
+            <h2 id="empty-title">Start your first group project</h2>
+            <p>Create a group, or join one with the invite code a teammate shared. The workspace opens
+              directly once you are a member.</p>
+            <div class="button-row">
+              <button class="primary-small" type="button" id="empty-create">创建小组 / Create group</button>
+              <button class="outline-button" type="button" id="empty-join">用邀请码加入 / Join with code</button>
+            </div>
+            <p class="muted-note">The image slot is reserved for a user-selected photo. No image is
+              loaded until material is provided.</p>
+          </div>
+          <figure class="image-slot image-slot-a" data-slot="team-setup-photo"
+                  aria-label="Reserved team setup photo slot, 3 by 2">
+            <div class="slot-placeholder">
+              <span class="slot-purpose">team-setup-photo</span>
+              <span class="slot-meta">3:2 · desktop 420 × 280 · image pending</span>
+            </div>
+            <figcaption>Suggested material: students organising interview notes, side-angle, hands and
+              notebooks in the middle 60%. At least 1500 × 1000.</figcaption>
+          </figure>
+        </section>
+
+        <section class="project-brief" id="project-stats" aria-label="Project snapshot">
+          <div class="brief-item">
+            <span class="stat-label">Project completion</span>
+            <strong id="stat-completion">—</strong>
+            <small id="stat-points">No accepted work yet</small>
+          </div>
+          <div class="brief-item">
+            <span class="stat-label">Recent checkpoint</span>
+            <strong id="stat-checkpoint">—</strong>
+            <small id="stat-checkpoint-note">No checkpoint recorded</small>
+          </div>
+          <div class="brief-item">
+            <span class="stat-label">Your accepted points</span>
+            <strong id="stat-my-points">—</strong>
+            <small id="stat-my-share">暂无已验收贡献</small>
+          </div>
+          <div class="brief-item">
+            <span class="stat-label">Anonymous acceptance</span>
+            <strong>On</strong>
+            <small>Choices, counts, and vote times stay private</small>
+          </div>
+        </section>
+
+        <section class="notice-board" aria-labelledby="notice-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Team notice board</p>
+              <h2 id="notice-title">What everyone is working on</h2>
+            </div>
+            <span class="updated-label" id="updated-label">—</span>
+          </div>
+
+          <div class="member-board" id="member-board" aria-label="Members and their current work"></div>
+
+          <div class="timeline-block">
+            <div class="section-heading timeline-heading">
+              <div>
+                <p class="eyebrow">Verified evidence</p>
+                <h2>Accepted work timeline</h2>
+              </div>
+              <div class="branch-filter" id="branch-filter" role="group" aria-label="Filter timeline by branch"></div>
+            </div>
+            <div class="timeline" id="timeline" aria-label="Accepted work timeline"></div>
+          </div>
+        </section>
+
+        <section class="work-grid" aria-label="Project work status">
+          <article class="status-card todo-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Open work</p>
+                <h2>To-do tasks</h2>
+              </div>
+              <span class="count-badge" id="todo-count">0</span>
+            </div>
+            <div class="task-list" id="todo-list"></div>
+          </article>
+
+          <article class="status-card check-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Peer review</p>
+                <h2>Waiting for confirmation</h2>
+              </div>
+              <span class="count-badge" id="review-count">0</span>
+            </div>
+            <div class="task-list compact-list" id="review-list"></div>
+          </article>
+
+          <article class="status-card problem-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Blocked / follow-up</p>
+                <h2>Encounter problem</h2>
+              </div>
+              <span class="count-badge warning" id="problem-count">0</span>
+            </div>
+            <div class="task-list compact-list" id="problem-list"></div>
+          </article>
+
+          <article class="status-card help-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Collaboration</p>
+                <h2>Ask for help in group</h2>
+              </div>
+              <span class="count-badge info" id="help-count">0</span>
+            </div>
+            <div class="task-list compact-list" id="help-list"></div>
+          </article>
+        </section>
+
+        <section class="tools-grid" aria-label="Project tools">
+          <article class="tool-card chat-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Team chat</p>
+                <h2>Project messages</h2>
+              </div>
+              <span class="muted-note">Chat never enters quality review</span>
+            </div>
+            <div class="chat-list" id="chat-list"></div>
+            <form class="inline-form" id="chat-form">
+              <label class="sr-only" for="chat-task">Link to task</label>
+              <select id="chat-task" name="taskId"></select>
+              <label class="sr-only" for="chat-body">Message</label>
+              <input id="chat-body" name="body" type="text" maxlength="4000" placeholder="Write a message…" required>
+              <button type="submit">Send</button>
+            </form>
+          </article>
+
+          <article class="tool-card report-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Closing report</p>
+                <h2>Preview and export</h2>
+              </div>
+              <span class="muted-note">Facts, statements, disagreements</span>
+            </div>
+            <p class="muted-note">Choose the material to include. The export is generated locally and can be handed to a teacher.</p>
+            <div class="export-options">
+              <label><input type="checkbox" id="export-tasks" checked> Task plans, versions and acceptance</label>
+              <label><input type="checkbox" id="export-timeline" checked> Branch timelines</label>
+              <label><input type="checkbox" id="export-disputes" checked> Report / dispute statements</label>
+              <label><input type="checkbox" id="export-reminders" checked> Escalated reminder facts</label>
+            </div>
+            <div class="button-row">
+              <button type="button" id="preview-report-button">Preview</button>
+              <a class="button-link" id="download-report-link" href="#" download>Download HTML</a>
+            </div>
+            <div class="report-preview" id="report-preview" hidden></div>
+          </article>
+
+          <article class="tool-card reports-card">
+            <div class="card-heading">
+              <div>
+                <p class="eyebrow">Disputes</p>
+                <h2>Reports from tasks</h2>
+              </div>
+              <span class="muted-note">No automatic reports</span>
+            </div>
+            <div class="chat-list" id="reports-list"></div>
+            <p class="muted-note">A failed acceptance never creates a report. Open a task to start one from its actual record.</p>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <aside id="assistant-panel" class="assistant-panel" hidden role="dialog" aria-modal="true" aria-labelledby="assistant-title">
+      <div class="assistant-head">
+        <div>
+          <p class="eyebrow">Evidence Q&amp;A</p>
+          <h2 id="assistant-title">Ask this project</h2>
+        </div>
+        <button class="icon-button" type="button" id="assistant-close" aria-label="Close project assistant">×</button>
+      </div>
+      <div class="assistant-body">
+        <div class="assistant-status">
+          <span class="mode-badge" id="ai-mode-badge">checking</span>
+          <span class="muted-note">votes excluded · chat excluded</span>
+        </div>
+        <p class="muted-note" id="ai-mode-note">—</p>
+        <p id="ai-context" class="muted-note" hidden></p>
+        <form class="stack-form compact" id="ai-form">
+          <label>Question about this project
+            <input id="ai-question" name="question" type="text" maxlength="1000"
+                   placeholder="例如：谁完成了问卷分析？" required>
+          </label>
+          <button type="submit">Ask assistant</button>
+        </form>
+        <div class="example-questions">
+          <button type="button" data-question="谁完成了问卷分析">Who completed the analysis?</button>
+          <button type="button" data-question="这份报告达到了哪些标准">Which criteria did the report meet?</button>
+          <button type="button" data-question="数据收集为什么延期">Why was data collection delayed?</button>
+          <button type="button" data-question="当前贡献比例是多少">Contribution percentages?</button>
+        </div>
+        <div class="ai-answer" id="ai-answer" hidden></div>
+        <p class="panel-note">Answers are evidence retrieval over this project's tasks, versions, criteria,
+          acceptance records and recorded events. Team chat and anonymous ballots are never part of the context.</p>
+      </div>
+    </aside>
+    <div class="assistant-backdrop" id="assistant-backdrop" hidden></div>
+
+    <dialog id="task-dialog" class="modal wide-modal">
+      <div class="modal-head">
+        <p class="eyebrow">Task record</p>
+        <button class="icon-button" type="button" data-close="task-dialog" aria-label="Close">×</button>
+      </div>
+      <div id="task-dialog-content"></div>
+    </dialog>
+
+    <dialog id="project-dialog" class="modal">
+      <div class="modal-head">
+        <p class="eyebrow">New project</p>
+        <button class="icon-button" type="button" data-close="project-dialog" aria-label="Close">×</button>
+      </div>
+      <form id="create-project-form" class="stack-form">
+        <label>Project name <input name="name" type="text" maxlength="120" required></label>
+        <label>Description <textarea name="description" rows="2" maxlength="2000"></textarea></label>
+        <div class="two-col">
+          <label>Planned points <input name="plannedPoints" type="number" min="1" max="10000" value="100" required></label>
+          <label>First branch <input name="branchName" type="text" maxlength="120" value="General" required></label>
+        </div>
+        <button type="submit">Create project</button>
+      </form>
+    </dialog>
+
+    <dialog id="join-dialog" class="modal">
+      <div class="modal-head">
+        <p class="eyebrow">Join a team</p>
+        <button class="icon-button" type="button" data-close="join-dialog" aria-label="Close">×</button>
+      </div>
+      <form id="join-project-form" class="stack-form">
+        <label>Invite code <input name="inviteCode" type="text" maxlength="32" placeholder="ABCD1234" required></label>
+        <p class="join-preview" id="join-preview" aria-live="polite">Enter a code to see which group it belongs to.</p>
+        <p class="muted-note">Ask a project member for the code shown in Project settings.</p>
+        <button type="submit">Join project</button>
+      </form>
+    </dialog>
+
+    <dialog id="task-create-dialog" class="modal wide-modal">
+      <div class="modal-head">
+        <p class="eyebrow">Plan a task</p>
+        <button class="icon-button" type="button" data-close="task-create-dialog" aria-label="Close">×</button>
+      </div>
+      <form id="create-task-form" class="stack-form">
+        <div class="two-col">
+          <label>Title <input name="title" type="text" maxlength="160" required></label>
+          <label>Branch <select name="branchId" id="task-branch" required></select></label>
+        </div>
+        <label>Description <textarea name="description" rows="2" maxlength="4000"></textarea></label>
+        <div class="two-col">
+          <label>Assignee <select name="assigneeId" id="task-assignee" required></select></label>
+          <label>Points <input name="points" type="number" min="1" max="1000" value="20" required></label>
+        </div>
+        <div class="two-col">
+          <label>Checkpoint <input name="checkpointAt" type="datetime-local" required></label>
+          <label>Deadline <input name="deadlineAt" type="datetime-local" required></label>
+        </div>
+        <label>Expected output <textarea name="expectedOutput" rows="2" maxlength="2000" required></textarea></label>
+        <label>Acceptance criteria (one per line) <textarea name="acceptanceCriteria" rows="4" maxlength="4000" required></textarea></label>
+        <fieldset class="author-fieldset">
+          <legend>Authors and frozen share (%)</legend>
+          <div id="author-rows"></div>
+          <p class="muted-note">Shares must total 100%. When all members are authors, each author confirms the version and also votes anonymously.</p>
+          <p class="share-total" id="share-total">Total: 0%</p>
+        </fieldset>
+        <div id="task-budget"></div>
+        <p id="task-create-error" class="error-text" role="status"></p>
+        <button type="submit">Create task</button>
+      </form>
+    </dialog>
+
+    <dialog id="branch-dialog" class="modal">
+      <div class="modal-head">
+        <p class="eyebrow">New branch</p>
+        <button class="icon-button" type="button" data-close="branch-dialog" aria-label="Close">×</button>
+      </div>
+      <form id="create-branch-form" class="stack-form">
+        <label>Branch name <input name="name" type="text" maxlength="120" required></label>
+        <label>Planned points <input name="plannedPoints" type="number" min="1" max="10000" required></label>
+        <button type="submit">Create branch</button>
+      </form>
+    </dialog>
+
+    <dialog id="settings-dialog" class="modal wide-modal">
+      <div class="modal-head">
+        <p class="eyebrow">Project settings</p>
+        <button class="icon-button" type="button" data-close="settings-dialog" aria-label="Close">×</button>
+      </div>
+      <div id="settings-content"></div>
+    </dialog>
+
+    <dialog id="report-dialog" class="modal wide-modal">
+      <div class="modal-head">
+        <p class="eyebrow">Report record</p>
+        <button class="icon-button" type="button" data-close="report-dialog" aria-label="Close">×</button>
+      </div>
+      <div id="report-dialog-content"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  </body>
+</html>

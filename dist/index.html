@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="version" content="signin-v0.1.0">
+    <meta
+      name="description"
+      content="Sign in to Anti-freerider, a focused workspace for fair and transparent student collaboration."
+    >
+    <title>Sign-in v0.1.0 | Anti-freerider</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1220'/%3E%3Cpath d='M18 44 29 18h6l11 26h-7l-2-6H27l-2 6Zm11-12h6l-3-8Z' fill='%235eead4'/%3E%3C/svg%3E"
+    >
+    <link rel="stylesheet" href="styles.css">
+    <script src="assets/auth.js" defer></script>
+  </head>
+  <body>
+    <main class="login-shell">
+      <section class="brand-panel" aria-labelledby="brand-title">
+        <div class="brand-lockup">
+          <span class="brand-mark" aria-hidden="true">AF</span>
+          <span>Anti-freerider</span>
+          <span class="version-badge">Sign-in v0.1.0</span>
+        </div>
+
+        <div class="brand-message">
+          <p class="eyebrow">Fair work. Visible progress.</p>
+          <h1 id="brand-title">Every contribution deserves to be seen.</h1>
+          <p class="brand-copy">
+            Keep group work clear, accountable, and easier to complete together.
+          </p>
+        </div>
+
+        <div class="trust-note">
+          <span class="trust-dot" aria-hidden="true"></span>
+          <span>Your team workspace stays private.</span>
+        </div>
+      </section>
+
+      <section class="form-panel" aria-labelledby="login-title">
+        <div class="form-card">
+          <div id="auth-error" class="form-alert" role="alert" hidden></div>
+
+          <div id="signin-view">
+            <header class="form-heading">
+              <p class="eyebrow">Welcome back</p>
+              <h2 id="login-title">Sign in to your workspace</h2>
+              <p>Continue managing your projects and team progress.</p>
+            </header>
+
+            <form id="signin-form" action="/api/auth/login" method="post" autocomplete="on">
+              <div class="field-group">
+                <label for="email">Email address</label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  placeholder="name@university.edu"
+                  required
+                >
+              </div>
+
+              <div class="field-group">
+                <div class="label-row">
+                  <label for="password">Password</label>
+                  <a href="#demo-help">Forgot password?</a>
+                </div>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  placeholder="Enter your password"
+                  minlength="8"
+                  required
+                >
+              </div>
+
+              <label class="remember-row" for="remember">
+                <input id="remember" name="remember" type="checkbox" checked>
+                <span>Keep me signed in on this device</span>
+              </label>
+
+              <button type="submit">Sign in</button>
+            </form>
+
+            <p class="signup-prompt">
+              New to Anti-freerider?
+              <a href="#register" id="show-register">Create an account</a>
+            </p>
+
+            <details class="demo-help" id="demo-help">
+              <summary>Local demo accounts</summary>
+              <p>
+                Sign in as <code>alice@demo.edu</code>, <code>ben@demo.edu</code>,
+                <code>cara@demo.edu</code>, or <code>dan@demo.edu</code>.
+                Password: <code>demo-pass-123</code>. The extra account
+                <code>eve@demo.edu</code> is not a member of the demo projects and is used to
+                check that non-members cannot read them. Demo data stays on this computer.
+              </p>
+            </details>
+          </div>
+
+          <div id="register-view" hidden>
+            <header class="form-heading">
+              <p class="eyebrow">New workspace</p>
+              <h2 id="register-title">Create your account</h2>
+              <p>Use a real name so teammates can recognise your work.</p>
+            </header>
+
+            <form id="register-form" action="/api/auth/register" method="post" autocomplete="on">
+              <div class="field-group">
+                <label for="register-name">Full name</label>
+                <input
+                  id="register-name"
+                  name="name"
+                  type="text"
+                  autocomplete="name"
+                  placeholder="Your name"
+                  maxlength="60"
+                  required
+                >
+              </div>
+
+              <div class="field-group">
+                <label for="register-email">Email address</label>
+                <input
+                  id="register-email"
+                  name="email"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  placeholder="name@university.edu"
+                  required
+                >
+              </div>
+
+              <div class="field-group">
+                <label for="register-password">Password</label>
+                <input
+                  id="register-password"
+                  name="password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="At least 8 characters"
+                  minlength="8"
+                  required
+                >
+              </div>
+
+              <button type="submit">Create account</button>
+            </form>
+
+            <p class="signup-prompt">
+              Already have an account?
+              <a href="#signin" id="show-signin">Sign in</a>
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+# Local runtime data and build output
+/data/
+/build/
+/server/lib/
+/tools/
+
+# OS noise
+.DS_Store
+
+# Python cache
+__pycache__/
+
+# Local environments and environment variables
+/.venv/
+.env
+.env.*
