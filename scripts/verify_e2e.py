@@ -218,6 +218,18 @@ def main():
     check(pending_task["state"] == "pending_review", "board still shows 待确认 with a missing vote")
     check(pending_task.get("score") is None, "pending version has no score")
     assert_no_vote_fields("member board while pending", pending_board)
+    task_path = f"/api/projects/{main_pid}/tasks/{t1}"
+    member_views = [viewer.get(task_path) for viewer in (alice, ben, cara, dan)]
+    action_keys = {"role", "canConfirm", "canVote", "canWithdraw", "confirmed", "allAuthors", "inferenceWarning"}
+    check(all(view["submissions"][0]["status"] == "pending"
+              and set(view["submissions"][0]["actions"]) <= action_keys for view in member_views),
+          "all four views expose only their own action hints during pending collection")
+    public_version = [{k: v for k, v in view["submissions"][0].items() if k != "actions"}
+                      for view in member_views]
+    check(all(version == public_version[0] and view["events"] == member_views[0]["events"]
+              for version, view in zip(public_version, member_views))
+          and not any("vote" in event["type"] for event in member_views[0]["events"]),
+          "public version and notifications stay identical across members after anonymous dissent")
     status, payload = cara.request(
         "POST", f"/api/projects/{main_pid}/tasks/{t1}/submissions/{sub1['id']}/vote",
         {"choice": "agree"}, allow=(409,))
@@ -225,6 +237,9 @@ def main():
     final_vote = vote(dan, main_pid, t1, sub1["id"], "agree")
     check(final_vote["submissions"][0]["status"] == "rejected", "T1 v1 is rejected after collection completes")
     check(final_vote.get("score") is None, "rejected T1 v1 scores nothing")
+    final_views = [viewer.get(task_path)["submissions"][0] for viewer in (alice, ben, cara, dan)]
+    check(all(version == final_views[0] and "actions" not in version for version in final_views),
+          "terminal version is public and exposes no participant's ballot activity")
     with db() as connection:
         check(connection.execute("SELECT COUNT(*) FROM task_scores WHERE task_id=?", (t1,)).fetchone()[0] == 0,
               "no score row exists for rejected T1 v1")
@@ -656,12 +671,17 @@ def main():
     check(all(c["projectId"] == main_pid for c in who["citations"]), "who-completed citations stay in main project")
     no_context = alice.post(f"/api/projects/{main_pid}/ai", {"question": "这份报告达到了哪些标准"})
     check(not no_context["citations"] and "请先打开" in no_context["answer"], "a contextual question requires a selected target")
+    chat_marker = "CHAT_ONLY_SAMPLING_METHOD_COULD_NOT_BE_TRACED"
+    alice.post(f"/api/projects/{main_pid}/messages", {"body": chat_marker, "taskId": t3})
     criteria = alice.post(f"/api/projects/{main_pid}/ai", {
         "question": "这份报告达到了哪些标准", "taskId": t3, "submissionId": t3sub["id"]})
     check("Report states the sample and method" in criteria["answer"] and "Questionnaire analysis report" in criteria["answer"],
           "criteria answer quotes the frozen criteria line by line", criteria["answer"][:300])
     check(any(c["submissionId"] == t3sub["id"] for c in criteria["citations"]),
           "criteria citation points to the accepted submission")
+    check(criteria["chatIncluded"] is False and criteria["votesIncluded"] is False
+          and chat_marker not in json.dumps(criteria),
+          "task-linked chat and individual ballots stay outside quality evidence")
     delay = alice.post(f"/api/projects/{main_pid}/ai", {"question": "数据收集为什么延期"})
     check("Interviewees rescheduled" in delay["answer"] and "2026-11-24T10:00:00Z" in delay["answer"],
           "delay answer cites the recorded reason and original date", delay["answer"][:300])
