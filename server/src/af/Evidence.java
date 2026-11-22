@@ -60,20 +60,20 @@ final class Evidence {
         String note;
         if (testDouble) {
             mode = "test-double";
-            label = "测试替身（非真实推理）";
-            note = "AF_AI_MODE=test-double：回答与引用来自确定性测试替身，不代表模型判断。";
+            label = "Test double (simulated inference)";
+            note = "AF_AI_MODE=test-double: Responses and citations come from a deterministic test double, no model is running.";
         } else if (configured && loopback) {
             mode = "local-model";
-            label = "本地模型（可配置）";
-            note = "AF_AI_ENDPOINT 指向本机模型；若调用失败会自动降级为证据检索回退。";
+            label = "Local model (configured)";
+            note = "AF_AI_ENDPOINT points to a local model; if the request fails, the service falls back to evidence retrieval.";
         } else if (configured && !loopback) {
             mode = "evidence-retrieval-fallback";
-            label = "证据检索回退（模型端点被拒绝）";
-            note = "只允许本机回环地址。项目数据未发送到外部模型。";
+            label = "Evidence retrieval (model endpoint rejected)";
+            note = "Only loopback endpoints are allowed. Project data stays on this device.";
         } else {
             mode = "evidence-retrieval-fallback";
-            label = "证据检索回退（未配置模型）";
-            note = "当前没有本地模型；系统只做确定性证据检索，不是模型推理。所有项目数据留在本机。";
+            label = "Evidence retrieval (no model configured)";
+            note = "No local model is configured; the system retrieves recorded evidence without running a model. All project data stays on this device.";
         }
         o.addProperty("mode", mode);
         o.addProperty("label", label);
@@ -125,7 +125,7 @@ final class Evidence {
             String answer = fallback.get("answer").getAsString();
             String modelError = "";
             if ("test-double".equals(mode)) {
-                answer = "【测试替身】以下回答由确定性测试替身生成，用于验证引用链路，不是真实模型推理。\n\n" + answer;
+                answer = "[Test double]This deterministic response, checks the citation flow, without running a model.\n\n" + answer;
             } else if ("local-model".equals(mode) && target.error() == null && !"contribution".equals(intent)) {
                 try {
                     String modelAnswer = callLocalModel(question, fallback);
@@ -133,11 +133,11 @@ final class Evidence {
                         // The model explains; deterministic retrieval remains attached so every
                         // quality statement still has a task/version citation.
                         answer = modelAnswer.trim()
-                                + "\n\n系统证据（确定性检索，不是模型判断）：\n" + fallback.get("answer").getAsString()
-                                + "\n\n引用证据：\n" + citationLines(fallback.getAsJsonArray("citations"));
+                                + "\n\nSystem evidence (deterministic retrieved without model inference): \n" + fallback.get("answer").getAsString()
+                                + "\n\nCitations: \n" + citationLines(fallback.getAsJsonArray("citations"));
                     }
                 } catch (Exception ex) {
-                    modelError = "本地模型调用失败，已降级为证据检索回退：" + ex.getMessage();
+                    modelError = "Local model request failed, switched to evidence retrieval: " + ex.getMessage();
                     mode = "evidence-retrieval-fallback";
                 }
             }
@@ -147,8 +147,8 @@ final class Evidence {
             JsonObject out = new JsonObject();
             out.addProperty("answer", answer);
             out.addProperty("mode", mode);
-            out.addProperty("modeLabel", "local-model".equals(mode) ? "本地模型" : "evidence-retrieval-fallback".equals(mode)
-                    ? (modelError.isEmpty() ? "证据检索回退" : "证据检索回退（模型失败）") : "测试替身");
+            out.addProperty("modeLabel", "local-model".equals(mode) ? "Local model" : "evidence-retrieval-fallback".equals(mode)
+                    ? (modelError.isEmpty() ? "Evidence retrieval" : "Evidence retrieval (model request failed)") : "Test double");
             out.addProperty("modelError", modelError);
             out.addProperty("intent", intent);
             out.add("citations", fallback.getAsJsonArray("citations"));
@@ -163,7 +163,7 @@ final class Evidence {
     private record Target(Tasks.TaskRow task, int submissionId, String error) {}
 
     private static final java.util.regex.Pattern QUOTED_TITLE =
-            java.util.regex.Pattern.compile("[《「『“\"]([^》」』”\"]+)[》」』”\"]");
+            java.util.regex.Pattern.compile("[“‘\"]([^”’\"]+)[”’\"]");
     private static final java.util.regex.Pattern VERSION =
             java.util.regex.Pattern.compile("(?i)\\bv([0-9]{1,9})\\b");
 
@@ -172,28 +172,28 @@ final class Evidence {
         var title = QUOTED_TITLE.matcher(question);
         boolean quoted = title.find();
         boolean criteria = "criteria".equals(intent);
-        boolean demonstrative = question.matches("(?s).*(这份|这篇|这项|这个任务|本版|this (report|deliverable|task|version)).*");
+        boolean demonstrative = question.matches("(?s).*\\bthis (report|deliverable|task|version)\\b.*");
         if (!quoted && !criteria) return new Target(null, 0, null);
         Tasks.TaskRow task = null;
         if (!quoted && demonstrative) {
             task = tasks.stream().filter(t -> t.id() == openTask).findFirst().orElse(null);
-            if (task == null) return new Target(null, 0, "请先打开具体成果和版本，或在问题中写出成果名称。");
+            if (task == null) return new Target(null, 0, "Open a specific deliverable and version, or include the title in the question.");
         } else {
             String named = quoted ? title.group(1) : criteriaSubject(question);
             if (named.isBlank()) {
-                return new Target(null, 0, "请指定要核对的成果名称，或打开对应任务和版本。");
+                return new Target(null, 0, "Specify the deliverable to check, or open its task and version.");
             }
             String query = normalizeTitle(named);
-            if (query.isEmpty()) return new Target(null, 0, "请指定要核对的成果名称。");
+            if (query.isEmpty()) return new Target(null, 0, "Specify the deliverable to check.");
             List<Tasks.TaskRow> matches = tasks.stream().filter(t -> titleMatches(t, query, true)).toList();
             if (matches.isEmpty() && query.length() >= 2) {
                 matches = tasks.stream().filter(t -> titleMatches(t, query, false)).toList();
             }
-            if (matches.isEmpty()) return new Target(null, 0, "在当前项目中未找到成果「" + named + "」。");
+            if (matches.isEmpty()) return new Target(null, 0, "No matching deliverable in this project: ‘" + named + "’.");
             if (matches.size() > 1) {
-                String choices = String.join("；", matches.stream()
-                        .map(t -> t.title() + "（" + t.branchName() + " · 任务 #" + t.id() + "）").toList());
-                return new Target(null, 0, "找到多个候选，请打开其中一项再问“这份报告”：" + choices);
+                String choices = String.join("; ", matches.stream()
+                        .map(t -> t.title() + " (" + t.branchName() + " · Task #" + t.id() + ")").toList());
+                return new Target(null, 0, "Multiple matches, open one and ask about that version: " + choices);
             }
             task = matches.get(0);
         }
@@ -207,7 +207,7 @@ final class Evidence {
                 ps.setInt(1, task.id());
                 ps.setInt(2, exactId ? selected : Integer.parseInt(version.group(1)));
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (!rs.next()) return new Target(null, 0, "未找到所指定的成果版本，请打开对应版本后重试。");
+                    if (!rs.next()) return new Target(null, 0, "The requested version was not found, open the version and try again.");
                     selected = rs.getInt(1);
                 }
             }
@@ -229,20 +229,16 @@ final class Evidence {
 
     private static String criteriaSubject(String question) {
         return VERSION.matcher(question).replaceAll("")
-                .replaceFirst("^(请问|帮我看看|帮我核对|please check|which criteria did|what criteria did)\\s*", "")
-                .replaceFirst("(达到|符合|满足|有哪|的验收标准|达标|\\s+(?:met|meet|criteria)\\b).*$", "")
-                .replaceFirst("(是否|能否|有没有)[，。？！?\\s]*$", "")
-                .replaceFirst("[，。？！?\\s]+$", "").strip();
+                .replaceFirst("^(?:please check|(?:which|what) criteria (?:did|does|do)|does|did)\\s+", "")
+                .replaceFirst("\\s+(?:met|meet|meets|satisfy|satisfies|criteria)\\b.*$", "")
+                .replaceFirst("[?.!]+$", "").strip();
     }
 
     private static String intent(String q) {
-        if (q.contains("标准") || q.contains("达到") || q.contains("criteria") || q.contains("达标")
-                || q.matches("(?s).*\\bmet\\b.*")) return "criteria";
-        if (q.contains("谁") || q.contains("who") || q.contains("哪个人") || q.contains("哪位")) return "who";
-        if (q.contains("延期") || q.contains("延误") || q.contains("为什么") || q.contains("原因")
-                || q.contains("delay") || q.contains("late")) return "delay";
-        if (q.contains("贡献") || q.contains("占比") || q.contains("得分") || q.contains("分数")
-                || q.contains("contribution") || q.contains("percent")) return "contribution";
+        if (q.matches("(?s).*\\b(criteria|criterion|met)\\b.*")) return "criteria";
+        if (q.matches("(?s).*\\bwho\\b.*")) return "who";
+        if (q.matches("(?s).*\\b(delay|delayed|extension|late|postponed)\\b.*")) return "delay";
+        if (q.matches("(?s).*\\b(contributions?|shares?|scores?|points?|percentages?|percent)\\b.*")) return "contribution";
         return "general";
     }
 
@@ -272,7 +268,8 @@ final class Evidence {
                         if (rs.next()) score = 1;
                     }
                 }
-                out.add(new TaskEvidence(task, score, similarity(q, text.toString().toLowerCase(Locale.ROOT))));
+                out.add(new TaskEvidence(task, score, 2 * similarity(q, task.title().toLowerCase(Locale.ROOT))
+                        + similarity(q, text.toString().toLowerCase(Locale.ROOT))));
             }
         }
         out.sort(Comparator.comparingDouble(TaskEvidence::bestMatch).reversed()
@@ -280,28 +277,13 @@ final class Evidence {
         return out;
     }
 
+    private static final java.util.Set<String> QUERY_STOP_WORDS = java.util.Set.of("a", "an", "the", "of", "was", "is", "does", "did", "who",
+                "why", "what", "which", "completed", "delayed", "task", "this", "work", "please");
+
     private static double similarity(String q, String text) {
-        String cleaned = q.replaceAll("[\\p{Punct}\\s]+", "");
-        String[] stop = {"谁", "完成", "了", "这份", "报告", "达到", "哪些", "标准", "为什么", "延期", "的", "是",
-                "哪", "个", "人", "请问", "一下", "怎么", "如何", "呢", "吗", "数据", "收集", "任务", "工作"};
-        List<String> grams = new ArrayList<>();
-        for (int len = 2; len <= 6; len++) {
-            for (int i = 0; i + len <= cleaned.length(); i++) {
-                String gram = cleaned.substring(i, i + len);
-                boolean skip = false;
-                for (String s : stop) if (s.contains(gram) || gram.contains(s)) { skip = true; break; }
-                if (!skip) grams.add(gram);
-            }
-        }
-        double best = 0;
-        for (String gram : grams) {
-            if (text.contains(gram)) best = Math.max(best, gram.length());
-        }
-        // Fall back to the coarsest task words when the question is short.
-        for (String word : cleaned.split("")) {
-            if (word.length() == 1) continue;
-        }
-        return best;
+        var haystack = new java.util.HashSet<>(List.of(text.split("[^\\p{L}\\p{N}]+")));
+        var terms = new java.util.HashSet<>(List.of(q.split("[^\\p{L}\\p{N}]+")));
+        return terms.stream().filter(term -> !term.isEmpty() && !QUERY_STOP_WORDS.contains(term) && haystack.contains(term)).count();
     }
 
     private static JsonObject whoAnswer(Connection c, int projectId, List<TaskEvidence> ranked, String q) throws SQLException {
@@ -330,18 +312,18 @@ final class Evidence {
                         }
                     }
                 }
-                answer.append("根据已验收记录，「").append(task.title()).append("」由 ");
+                answer.append("According to the acceptance record, ‘").append(task.title()).append("’ was completed by ");
                 JsonArray authors = submissionAuthors(c, submissionId);
                 for (int i = 0; i < authors.size(); i++) {
-                    if (i > 0) answer.append("、");
+                    if (i > 0) answer.append(", ");
                     JsonObject a = authors.get(i).getAsJsonObject();
-                    answer.append(a.get("name").getAsString()).append("（")
-                            .append(fmt(a.get("sharePct").getAsDouble())).append("%）");
+                    answer.append(a.get("name").getAsString()).append(" (")
+                            .append(fmt(a.get("sharePct").getAsDouble())).append("%)");
                 }
-                answer.append(" 完成；验收版本 v").append(version).append("，").append(points)
-                        .append(" 分，验收日期 ").append(acceptedAt).append("。");
-                answer.append(" 这是已验收记录，不是对未验收工作的评价。\n");
-                citations.add(citation("E" + (citations.size() + 1), task.title() + " · 已验收版本 v" + version,
+                answer.append(". Accepted version v").append(version).append(", ").append(points)
+                        .append(" points, accepted on ").append(acceptedAt).append(".");
+                answer.append(" This record covers accepted work only.\n");
+                citations.add(citation("E" + (citations.size() + 1), task.title() + " · Accepted version v" + version,
                         projectId, task.id(), submissionId, null, null));
                 added++;
             } else if (te.bestMatch() > 0) {
@@ -360,14 +342,14 @@ final class Evidence {
                     }
                 }
                 if (submissionId != null) {
-                    answer.append("「").append(task.title()).append("」已有版本 v").append(version)
-                            .append("，当前状态：").append(statusLabel(status))
-                            .append("；尚无以该版本为依据的计分。\n");
-                    citations.add(citation("E" + (citations.size() + 1), task.title() + " · 版本 v" + version,
+                    answer.append("‘").append(task.title()).append("’ has version v").append(version)
+                            .append(", current status: ").append(statusLabel(status))
+                            .append("; this version has earned no points.\n");
+                    citations.add(citation("E" + (citations.size() + 1), task.title() + " · Version v" + version,
                             projectId, task.id(), submissionId, null, null));
                 } else {
-                    answer.append("「").append(task.title()).append("」目前没有提交物，无法据此判断谁完成了该工作。\n");
-                    citations.add(citation("E" + (citations.size() + 1), task.title() + " · 任务分工",
+                    answer.append("‘").append(task.title()).append("’ has no submissions yet. There is no evidence of who completed the work.\n");
+                    citations.add(citation("E" + (citations.size() + 1), task.title() + " · Task agreement",
                             projectId, task.id(), null, null, null));
                 }
                 added++;
@@ -375,8 +357,8 @@ final class Evidence {
             if (added >= 3) break;
         }
         if (added == 0) {
-            answer.append("当前项目材料中没有找到与该问题对应、且已验收的成果。缺少：可对应的任务标题或提交物。请打开任务列表确认，或补充成果后再问。");
-            citations.add(citation("E1", "项目任务列表", projectId, 0, null, null, null));
+            answer.append("No matching accepted deliverable was found in this project. Missing: a matching task title or submission. Check the task list, or add the deliverable and ask again.");
+            citations.add(citation("E1", "Project tasks", projectId, 0, null, null, null));
         }
         return result(answer.toString(), citations);
     }
@@ -408,33 +390,33 @@ final class Evidence {
                 }
             }
         }
-        answer.append("按「").append(task.title()).append("」")
-                .append(submissionId == 0 ? "约定" : "v" + version + " 冻结")
-                .append("的验收标准逐条核对：\n");
-        if (pdf) answer.append("请打开该版 PDF 查看附件原文。问答只核对随版本保存的正文文本。\n");
+        answer.append("Checking ‘").append(task.title()).append("’ ")
+                .append(submissionId == 0 ? "agreed" : "v" + version + " frozen")
+                .append(" acceptance criteria: \n");
+        if (pdf) answer.append("Open this version’s PDF to read the original attachment. This check uses only the saved deliverable text.\n");
         String[] lines = criteria.split("\\r?\\n");
         int index = 1;
         for (String line : lines) {
-            String criterion = line.trim().replaceFirst("^[-*\\d.、) ]+", "");
+            String criterion = line.trim().replaceFirst("^[-*\\d., ) ]+", "");
             if (criterion.isEmpty()) continue;
             String evidence = findEvidence(criterion, artifact);
-            answer.append(index).append(". 标准：").append(criterion).append("\n");
+            answer.append(index).append(". Criterion: ").append(criterion).append("\n");
             if (evidence == null) {
-                answer.append("   提交物中未找到明确对应内容。缺少：能说明该标准的材料。\n");
+                answer.append("   No matching passage was found in the submission. Missing: evidence addressing this criterion.\n");
             } else {
-                answer.append("   提交物依据：").append(evidence).append("\n");
+                answer.append("   Submission evidence: ").append(evidence).append("\n");
             }
             index++;
         }
         if (submissionId == 0) {
-            answer.append("当前没有提交物，因此无法判断是否达到上述标准。");
-            citations.add(citation("E1", task.title() + " · 任务验收标准", projectId, task.id(), null, null, null));
+            answer.append("No deliverable has been submitted. These criteria cannot yet be checked.");
+            citations.add(citation("E1", task.title() + " · Task acceptance criteria", projectId, task.id(), null, null, null));
         } else {
-            answer.append("验收记录：版本 v").append(version).append(" 当前状态为「").append(statusLabel(status))
-                    .append("」。只依据上述提交物与冻结标准，不评价群聊内容。");
-            citations.add(citation("E1", task.title() + " · 冻结验收标准 v" + version, projectId, task.id(), submissionId, null, null));
-            citations.add(citation("E2", task.title() + " · 提交物 v" + version, projectId, task.id(), submissionId, null, null));
-            citations.add(citation("E3", task.title() + " · 验收记录 v" + version + " · " + statusLabel(status),
+            answer.append("Acceptance record: Version v").append(version).append(" is ‘").append(statusLabel(status))
+                    .append("’. This check uses the submission and frozen criteria, team chat is excluded.");
+            citations.add(citation("E1", task.title() + " · Frozen acceptance criteria v" + version, projectId, task.id(), submissionId, null, null));
+            citations.add(citation("E2", task.title() + " · Deliverable v" + version, projectId, task.id(), submissionId, null, null));
+            citations.add(citation("E3", task.title() + " · Acceptance record v" + version + " · " + statusLabel(status),
                     projectId, task.id(), submissionId, null, null));
         }
         return result(answer.toString(), citations);
@@ -443,55 +425,59 @@ final class Evidence {
     private static String findEvidence(String criterion, String artifact) {
         String source = artifact.trim();
         if (source.isEmpty()) return null;
-        String cleaned = criterion.replaceAll("[\\p{Punct}\\s]+", "");
-        String best = null;
-        for (int len = Math.min(6, cleaned.length()); len >= 2; len--) {
-            for (int i = 0; i + len <= cleaned.length(); i++) {
-                String gram = cleaned.substring(i, i + len);
-                int at = source.indexOf(gram);
-                if (at >= 0) {
-                    int start = Math.max(0, at - 25);
-                    int end = Math.min(source.length(), at + gram.length() + 45);
-                    best = (start > 0 ? "…" : "") + source.substring(start, end).replace("\n", " ") + (end < source.length() ? "…" : "");
-                    break;
-                }
-            }
-            if (best != null) break;
+        var words = java.util.regex.Pattern.compile("[\\p{L}\\p{N}]+");
+        var criterionTerms = new java.util.HashSet<String>();
+        var terms = words.matcher(criterion.toLowerCase(Locale.ROOT));
+        while (terms.find()) {
+            String term = terms.group();
+            if (term.length() >= 3 && !QUERY_STOP_WORDS.contains(term)) criterionTerms.add(term);
         }
-        return best;
+        var passage = words.matcher(source);
+        int bestStart = -1;
+        int bestLength = 0;
+        while (passage.find()) {
+            String term = passage.group().toLowerCase(Locale.ROOT);
+            if (term.length() > bestLength && criterionTerms.contains(term)) {
+                bestStart = passage.start();
+                bestLength = passage.end() - passage.start();
+            }
+        }
+        if (bestStart < 0) return null;
+        int start = Math.max(0, bestStart - 25);
+        int end = Math.min(source.length(), bestStart + bestLength + 45);
+        return (start > 0 ? "…" : "") + source.substring(start, end).replace("\n", " ")
+                + (end < source.length() ? "…" : "");
     }
 
     private static JsonObject delayAnswer(Connection c, int projectId, List<TaskEvidence> ranked, String q) throws SQLException {
         StringBuilder answer = new StringBuilder();
         JsonArray citations = new JsonArray();
-        Integer taskId = ranked.isEmpty() ? null : ranked.get(0).task().id();
+        Integer taskId = ranked.isEmpty() || ranked.get(0).bestMatch() <= 0 ? null : ranked.get(0).task().id();
         int added = 0;
         try (PreparedStatement ps = c.prepareStatement(
                 "SELECT d.id,d.task_id,d.old_deadline,d.new_deadline,d.reason,d.status,d.created_at,d.decided_at," +
                         "d.decision_note,u.name AS requester,t.title,t.checkpoint_at FROM date_changes d " +
                         "JOIN users u ON u.id=d.requested_by JOIN tasks t ON t.id=d.task_id WHERE d.project_id=? " +
-                        "AND (? IS NULL OR d.task_id=?) ORDER BY d.id")) {
+                        "AND d.task_id=? ORDER BY d.id")) {
             ps.setInt(1, projectId);
             if (taskId == null) ps.setNull(2, java.sql.Types.INTEGER);
             else ps.setInt(2, taskId);
-            if (taskId == null) ps.setNull(3, java.sql.Types.INTEGER);
-            else ps.setInt(3, taskId);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    answer.append("「").append(rs.getString("title")).append("」的记录显示：原截止 ")
-                            .append(rs.getString("old_deadline")).append("，申请改为 ")
-                            .append(rs.getString("new_deadline")).append("；原因：")
-                            .append(rs.getString("reason")).append("；结果：")
-                            .append("approved".equals(rs.getString("status")) ? "已同意" : "rejected".equals(rs.getString("status")) ? "未同意" : "待处理")
-                            .append("（").append(rs.getString("requester")).append(" 于 ")
-                            .append(rs.getString("created_at")).append(" 提出")
-                            .append(rs.getString("decided_at") == null ? "" : "，" + rs.getString("decided_at") + " 处理")
-                            .append("）。");
+                    answer.append("‘").append(rs.getString("title")).append("’ — original deadline ")
+                            .append(rs.getString("old_deadline")).append(", requested deadline ")
+                            .append(rs.getString("new_deadline")).append("; reason: ")
+                            .append(rs.getString("reason")).append("; outcome: ")
+                            .append("approved".equals(rs.getString("status")) ? "Approved" : "rejected".equals(rs.getString("status")) ? "Declined" : "Pending")
+                            .append(" (").append(rs.getString("requester")).append(" on ")
+                            .append(rs.getString("created_at")).append(" requested")
+                            .append(rs.getString("decided_at") == null ? "" : ", " + rs.getString("decided_at") + " decided")
+                            .append(").");
                     if (!rs.getString("decision_note").isEmpty()) {
-                        answer.append("处理说明：").append(rs.getString("decision_note"));
+                        answer.append("Decision note: ").append(rs.getString("decision_note"));
                     }
                     answer.append("\n");
-                    citations.add(citation("E" + (citations.size() + 1), "延期记录 · " + rs.getString("title"),
+                    citations.add(citation("E" + (citations.size() + 1), "Deadline change · " + rs.getString("title"),
                             projectId, rs.getInt("task_id"), null, rs.getInt("id"), null));
                     added++;
                 }
@@ -505,13 +491,13 @@ final class Evidence {
                 ps.setInt(1, taskId);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        answer.append("没有找到正式延期记录；但「").append(rs.getString("title"))
-                                .append("」有已记录的").append("blocker".equals(rs.getString("kind")) ? "阻碍" : "求助")
-                                .append("：").append(rs.getString("body")).append("；所需支持：")
-                                .append(rs.getString("needed_support")).append("（")
-                                .append(rs.getString("name")).append("，").append(rs.getString("created_at"))
-                                .append("）。\n");
-                        citations.add(citation("E" + (citations.size() + 1), "阻碍/求助记录 · " + rs.getString("title"),
+                        answer.append("No formal extension was found, but ‘").append(rs.getString("title"))
+                                .append("’ has a recorded ").append("blocker".equals(rs.getString("kind")) ? "blocker" : "help request")
+                                .append(": ").append(rs.getString("body")).append("; Support needed: ")
+                                .append(rs.getString("needed_support")).append(" (")
+                                .append(rs.getString("name")).append(", ").append(rs.getString("created_at"))
+                                .append(").\n");
+                        citations.add(citation("E" + (citations.size() + 1), "blocker/Help record · " + rs.getString("title"),
                                 projectId, taskId, null, null, rs.getInt("id")));
                         added++;
                     }
@@ -519,14 +505,14 @@ final class Evidence {
             }
         }
         if (added == 0) {
-            answer.append("当前项目没有与该问题对应的已记录延期事件，也没有可引用的阻碍记录。缺少：正式延期申请或阻碍说明。");
+            answer.append("No matching deadline change was or blocker record was found in this project. Missing: a formal extension request or blocker note.");
             if (taskId != null) {
-                citations.add(citation("E1", "任务记录", projectId, taskId, null, null, null));
+                citations.add(citation("E1", "Task record", projectId, taskId, null, null, null));
             } else {
-                citations.add(citation("E1", "项目任务列表", projectId, 0, null, null, null));
+                citations.add(citation("E1", "Project tasks", projectId, 0, null, null, null));
             }
         }
-        answer.append("贡献数字不由模型猜测；如需计算，请查看结项报告中的系统复算。");
+        answer.append(" Contribution totals come from accepted records; for the calculation, see the closing report.");
         return result(answer.toString(), citations);
     }
 
@@ -534,24 +520,24 @@ final class Evidence {
             throws SQLException {
         StringBuilder answer = new StringBuilder();
         JsonArray citations = new JsonArray();
-        answer.append("贡献数字由系统从已验收记录计算，不由模型推断。项目完成度 ")
-                .append(fmt(contribution.completionPct())).append("%（").append(contribution.acceptedPoints())
-                .append(" / ").append(contribution.plannedPoints()).append(" 分）。\n");
+        answer.append("The application calculates contributions from accepted records, independently of any model. Project completion ")
+                .append(fmt(contribution.completionPct())).append("% (").append(contribution.acceptedPoints())
+                .append(" / ").append(contribution.plannedPoints()).append(" points).\n");
         if (!contribution.hasAccepted()) {
-            answer.append("暂无已验收贡献。");
+            answer.append("No accepted contributions yet.");
         } else {
             for (Auth.User member : contribution.members()) {
-                answer.append("- ").append(member.name()).append("：")
-                        .append(fmt(contribution.memberPoints().getOrDefault(member.id(), 0.0))).append(" 分，占已验收贡献 ")
+                answer.append("- ").append(member.name()).append(": ")
+                        .append(fmt(contribution.memberPoints().getOrDefault(member.id(), 0.0))).append(" points, share of accepted contributions ")
                         .append(fmt(contribution.memberSharePct(member.id()))).append("%\n");
             }
-            answer.append("公式：个人分值 = 每项已验收任务分 × 冻结署名比例；个人占比 = 个人已验收分值 ÷ 全组已验收分值。");
+            answer.append("Formula: Individual points = accepted task points × frozen author share; Individual share = individual accepted points ÷ total accepted points.");
         }
         for (Contribution.AcceptedTask task : contribution.acceptedTasks()) {
-            citations.add(citation("E" + (citations.size() + 1), task.title() + " · 已验收版本 v" + task.version(),
+            citations.add(citation("E" + (citations.size() + 1), task.title() + " · Accepted version v" + task.version(),
                     projectId, task.taskId(), task.submissionId(), null, null));
         }
-        if (citations.isEmpty()) citations.add(citation("E1", "项目任务列表", projectId, 0, null, null, null));
+        if (citations.isEmpty()) citations.add(citation("E1", "Project tasks", projectId, 0, null, null, null));
         return result(answer.toString(), citations);
     }
 
@@ -563,9 +549,9 @@ final class Evidence {
         for (TaskEvidence te : ranked) {
             if (te.bestMatch() <= 0 || te.bestMatch() < topMatch) continue;
             Tasks.TaskRow task = te.task();
-            answer.append("「").append(task.title()).append("」（").append(task.branchName()).append("）：负责人 ")
-                    .append(task.assigneeName()).append("，计划 ").append(task.points()).append(" 分，检查点 ")
-                    .append(task.checkpointAt()).append("。");
+            answer.append("‘").append(task.title()).append("’ (").append(task.branchName()).append("): Assignee ")
+                    .append(task.assigneeName()).append(", Plan ").append(task.points()).append(" points, Checkpoint ")
+                    .append(task.checkpointAt()).append(".");
             Integer submissionId = null;
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT id FROM submissions WHERE task_id=? ORDER BY version DESC LIMIT 1")) {
@@ -574,17 +560,17 @@ final class Evidence {
                     if (rs.next()) submissionId = rs.getInt(1);
                 }
             }
-            if (te.score() == 1) answer.append(" 该任务已有通过并计分的版本。");
-            else if (submissionId != null) answer.append(" 已有提交物，可打开版本查看验收状态。");
-            else answer.append(" 尚无提交物。");
+            if (te.score() == 1) answer.append(" This task has an accepted, scored version.");
+            else if (submissionId != null) answer.append(" A submission is available, open its version to see the review status.");
+            else answer.append(" No submissions yet.");
             answer.append("\n");
             citations.add(citation("E" + (citations.size() + 1), task.title(), projectId, task.id(), submissionId, null, null));
             added++;
             if (added >= 4) break;
         }
         if (added == 0) {
-            answer.append("当前项目材料中没有找到与问题相关的任务或提交物。缺少：能对应问题的任务、成果版本或事件记录。");
-            citations.add(citation("E1", "项目任务列表", projectId, 0, null, null, null));
+            answer.append("No matching task or deliverable was found in this project. Missing: a matching task, version or event record.");
+            citations.add(citation("E1", "Project tasks", projectId, 0, null, null, null));
         }
         return result(answer.toString(), citations);
     }
@@ -629,7 +615,7 @@ final class Evidence {
         for (var e : citations) {
             JsonObject c = e.getAsJsonObject();
             sb.append("- [").append(c.get("id").getAsString()).append("] ")
-                    .append(c.get("label").getAsString()).append("：").append(c.get("url").getAsString()).append("\n");
+                    .append(c.get("label").getAsString()).append(": ").append(c.get("url").getAsString()).append("\n");
         }
         return sb.toString();
     }
@@ -696,13 +682,13 @@ final class Evidence {
     }
 
     private static String statusLabel(String status) {
-        if (status == null) return "无提交";
+        if (status == null) return "No submission";
         return switch (status) {
-            case "pending" -> "待确认";
-            case "accepted" -> "已通过";
-            case "rejected" -> "未通过";
-            case "withdrawn" -> "已撤回";
-            case "superseded" -> "已被新版取代";
+            case "pending" -> "Pending review";
+            case "accepted" -> "Accepted";
+            case "rejected" -> "Rejected";
+            case "withdrawn" -> "Withdrawn";
+            case "superseded" -> "Superseded";
             default -> status;
         };
     }

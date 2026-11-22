@@ -58,18 +58,18 @@ def main():
     def task_data(branch, title, points=1):
         return {"title": title, "assigneeId": 1, "branchId": branch, "points": points,
                 "checkpointAt": "2026-12-01T00:00:00Z", "deadlineAt": "2026-12-03T00:00:00Z",
-                "expectedOutput": "Dated observations", "acceptanceCriteria": "样本编号\n统计方法"}
+                "expectedOutput": "Dated observations", "acceptanceCriteria": "Sample ID\nStatistical method"}
 
     def task(pid, branch, title, points=1):
         return alice.post(f"/api/projects/{pid}/tasks", task_data(branch, title, points))["id"]
 
     pid, branch, invite = project("Acceptance Versions", 25, ben, cara, dan)
-    tid = task(pid, branch, "问卷分析报告", 5)
+    tid = task(pid, branch, "Survey analysis report", 5)
     base = f"/api/projects/{pid}/tasks/{tid}"
     for label, body in (
         ("filename only", {"artifactName": "fieldwork.pdf"}),
-        ("short summary only", {"content": "已完成"}),
-        ("short placeholder pasted as text", {"artifactText": "已完成。"}),
+        ("short summary only", {"content": "Completed"}),
+        ("short placeholder pasted as text", {"artifactText": "Completed."}),
         ("whitespace only", {"artifactText": " \n\t "}),
         ("external URL only", {"artifactText": "https://example.invalid/report.pdf"}),
         ("invalid PDF", {"artifactName": "bad.pdf", "pdfBase64": "bm90IGEgUERG"}),
@@ -80,8 +80,8 @@ def main():
                           {"artifactName": "huge.pdf", "pdfBase64": oversized}) == 413,
           "server enforces 1 MiB PDF limit")
     check(not ben.get(base)["submissions"], "failed submissions leave the task without versions")
-    missing = ben.post(f"/api/projects/{pid}/ai", {"question": "《月壤光谱》达到哪些标准？"})
-    check("未找到成果" in missing["answer"] and not missing["citations"] and "问卷" not in missing["answer"],
+    missing = ben.post(f"/api/projects/{pid}/ai", {"question": "Which criteria does “Lunar soil spectrum” meet?"})
+    check("No matching deliverable" in missing["answer"] and not missing["citations"] and "Survey" not in missing["answer"],
           "named missing work cites no unrelated report")
     check(missing["mode"] == "evidence-retrieval-fallback", "run records deterministic retrieval fallback mode")
 
@@ -105,10 +105,10 @@ def main():
     dan.post(f"/api/projects/{pid}/leave")
     check(cara.get(base)["submissions"][0]["status"] == "pending", "departure keeps pending v1 intact")
     check(dan.status_of("GET", v1["attachmentUrl"]) == 403, "former member loses access to project PDF")
-    check(alice.status_of("POST", base + "/submissions", {"artifactText": "样本编号 B-38"}) == 409,
+    check(alice.status_of("POST", base + "/submissions", {"artifactText": "Sample ID B-38"}) == 409,
           "valid replacement is refused until explicit withdrawal")
     withdraw = base + f"/submissions/{v1['id']}/withdraw"
-    reason = "组员退出，重新收集确认"
+    reason = "Member left, collect confirmations again"
     check(ben.status_of("POST", withdraw, {"reason": reason}) == 403, "non-author cannot withdraw")
     check(alice.status_of("POST", withdraw, {"reason": "   "}) == 400, "author must give a nonblank reason")
     closed = alice.post(withdraw, {"reason": reason})
@@ -123,7 +123,7 @@ def main():
           "same file name in v2 leaves v1 bytes unchanged")
     for version in (v1, v2):
         answer = ben.post(f"/api/projects/{pid}/ai", {
-            "question": "这份报告达到哪些标准", "taskId": tid, "submissionId": version["id"]})
+            "question": "Which criteria does this report meet", "taskId": tid, "submissionId": version["id"]})
         check(len(answer["citations"]) == 3 and all(c["submissionId"] == version["id"] for c in answer["citations"]),
               f"selected v{version['version']} bounds all evidence citations")
     check(vote(ben, pid, tid, v2["id"], "agree")["submissions"][0]["status"] == "pending",
@@ -132,15 +132,15 @@ def main():
           "v2 uses three current members and scores once after Cara's ballot")
     check(cara.status_of("POST", base + f"/submissions/{v2['id']}/vote", {"choice": "agree"}) == 409,
           "repeated last ballot cannot score again")
-    task(pid, branch, "问卷分析报告")
-    task(pid, branch, "问卷分析补充报告")
-    for named in ("问卷分析报告", "问卷分析"):
-        answer = ben.post(f"/api/projects/{pid}/ai", {"question": f"《{named}》达到哪些标准？"})
-        check("多个候选" in answer["answer"] and not answer["citations"], f"ambiguous title {named} asks user to choose")
+    task(pid, branch, "Survey analysis report")
+    task(pid, branch, "Survey analysis supplement")
+    for named in ("Survey analysis report", "Survey analysis"):
+        answer = ben.post(f"/api/projects/{pid}/ai", {"question": f"Which criteria does “{named}” meet?"})
+        check("Multiple matches" in answer["answer"] and not answer["citations"], f"ambiguous title {named} asks user to choose")
 
     race_id = task(pid, branch, "Last ballot vs withdrawal", 4)
     race_base = f"/api/projects/{pid}/tasks/{race_id}"
-    submission = alice.post(race_base + "/submissions", {"artifactText": "样本编号 R-4。统计方法为中位数。"})["submissions"][0]
+    submission = alice.post(race_base + "/submissions", {"artifactText": "Sample ID R-4. Statistical method: median."})["submissions"][0]
     path = race_base + f"/submissions/{submission['id']}"
     vote(ben, pid, race_id, submission["id"], "agree")
     terminal_responses = race(lambda: cara.raw("POST", path + "/vote", {"choice": "agree"}),
@@ -156,7 +156,7 @@ def main():
     html = ben.get(f"/api/projects/{pid}/report/export?tasks=1&timeline=1")
     (OUT / "withdrawal-report.html").write_text(html, encoding="utf-8")
     exported = parse_export(html)
-    check(reason in html and "已撤回" in html and base64.b64encode(first).decode() in html,
+    check(reason in html and "Withdrawn" in html and base64.b64encode(first).decode() in html,
           "export preserves withdrawn date, reason and downloadable original PDF")
     private_keys = {"choice", "voter", "voterId", "votes", "voteCount", "hasVoted", "voteTime"}
 
@@ -182,18 +182,18 @@ def main():
     small, small_branch, _ = project("Budget Limits", 10, ben)
     task(small, small_branch, "First seven", 7)
     status, error = reserve(ben, small, small_branch, "Second seven", 7)
-    check(status == 409 and error["error"].count("剩余 3 分，超出 4 分") == 2,
+    check(status == 409 and error["error"].count("remaining 3 points, over by 4 points") == 2,
           "project and branch both report remaining 3 and excess 4")
     check(reserve(ben, small, small_branch, "Reduced to three", 3)[0] == 200, "lowering task to 3 saves")
     other = project("Branch Only", 20, ben)[0]
     alice.post(f"/api/projects/{other}/branches", {"name": "Small branch", "plannedPoints": 4})
     other_branch = next(b["id"] for b in board(alice, other)["branches"] if b["name"] == "Small branch")
-    check("分支剩余 4 分，超出 1 分" in reserve(ben, other, other_branch, "Too much", 5)[1]["error"],
+    check("Branch remaining 4 points, over by 1 point" in reserve(ben, other, other_branch, "Too much", 5)[1]["error"],
           "branch alone can reject a task with project points available")
     combined = project("Project Only", 10, ben)[0]
     alice.post(f"/api/projects/{combined}/branches", {"name": "Large branch", "plannedPoints": 20})
     combined_branch = next(b["id"] for b in board(alice, combined)["branches"] if b["name"] == "Large branch")
-    check("项目剩余 10 分，超出 1 分" in reserve(ben, combined, combined_branch, "Too much", 11)[1]["error"],
+    check("Project remaining 10 points, over by 1 point" in reserve(ben, combined, combined_branch, "Too much", 11)[1]["error"],
           "project alone can reject a task with branch points available")
 
     revised, revised_branch, _ = project("Revised Plan 14", 10, ben)
@@ -204,7 +204,7 @@ def main():
     second_id = task(revised, revised_branch, "Revised second seven", 7)
     for item in (first_id, second_id):
         sid = alice.post(f"/api/projects/{revised}/tasks/{item}/submissions",
-                         {"artifactText": "样本编号 X-7。统计方法为均值。"})["submissions"][0]["id"]
+                         {"artifactText": "Sample ID X-7. Statistical method: mean."})["submissions"][0]["id"]
         vote(ben, revised, item, sid, "agree")
     revised_board = board(alice, revised)
     check(revised_board["contribution"]["completionPct"] == 100
@@ -222,7 +222,7 @@ def main():
     payload["assigneeId"] = 3
     retained_task = alice.post(f"/api/projects/{retained}/tasks", payload)["id"]
     sid = cara.post(f"/api/projects/{retained}/tasks/{retained_task}/submissions",
-                    {"artifactText": "样本编号 C-7。统计方法为中位数。"})["submissions"][0]["id"]
+                    {"artifactText": "Sample ID C-7. Statistical method: median."})["submissions"][0]["id"]
     vote(alice, retained, retained_task, sid, "agree")
     cara.post(f"/api/projects/{retained}/leave")
     check(any(m["id"] == 3 and m["points"] == 7 and m["sharePct"] == 100

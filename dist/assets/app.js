@@ -14,23 +14,23 @@
 
   const $ = function (id) { return document.getElementById(id); };
   const STATUS_LABELS = {
-    todo: "待办",
-    needs_revision: "需修订",
-    pending_review: "待确认",
-    blocked: "受阻",
-    follow_up: "待跟进",
-    accepted: "已验收",
-    working: "进行中",
-    waiting_review: "待验收",
-    done: "已完成",
-    idle: "暂无任务",
-    open: "未结案",
-    closed: "已结案",
-    pending: "待确认",
-    rejected: "未通过",
-    withdrawn: "已撤回",
-    superseded: "已被新版取代",
-    approved: "已同意"
+    todo: "To do",
+    needs_revision: "Needs revision",
+    pending_review: "Pending review",
+    blocked: "Blocked",
+    follow_up: "Needs follow-up",
+    accepted: "Accepted",
+    working: "In progress",
+    waiting_review: "Awaiting review",
+    done: "Completed",
+    idle: "No tasks",
+    open: "Open",
+    closed: "Closed",
+    pending: "Pending review",
+    rejected: "Rejected",
+    withdrawn: "Withdrawn",
+    superseded: "Superseded",
+    approved: "Approved"
   };
   const STATUS_CLASSES = {
     pending_review: "working",
@@ -93,14 +93,14 @@
       opts.hour = "2-digit";
       opts.minute = "2-digit";
     }
-    return date.toLocaleString(undefined, opts);
+    return date.toLocaleString("en-US", opts);
   }
 
   function fmtDateTime(iso) {
     if (!iso) return "—";
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
-    return date.toLocaleString(undefined, {
+    return date.toLocaleString("en-US", {
       year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
     });
   }
@@ -109,7 +109,7 @@
     if (!iso) return "—";
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
-    return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   }
 
   function fmtNumber(value) {
@@ -409,7 +409,7 @@
           h("strong", { text: project.name }),
           h("small", {
             text: project.memberCount + " members · " +
-              (project.hasAccepted ? fmtNumber(project.completionPct) + "% complete" : "暂无已验收贡献")
+              (project.hasAccepted ? fmtNumber(project.completionPct) + "% complete" : "No accepted contributions yet")
           })),
         h("span", { class: "status-dot" + (active ? " active" : ""), "aria-hidden": active ? null : "true" }));
       list.append(button);
@@ -518,7 +518,7 @@
     $("stat-checkpoint").textContent = "—";
     $("stat-checkpoint-note").textContent = "No checkpoint recorded";
     $("stat-my-points").textContent = "—";
-    $("stat-my-share").textContent = "暂无已验收贡献";
+    $("stat-my-share").textContent = "No accepted contributions yet";
   }
 
   function renderHeader() {
@@ -546,12 +546,12 @@
       "Project completion " + fmtNumber(contribution.completionPct) + " percent, " +
       contribution.acceptedPoints + " of " + contribution.plannedPoints + " points accepted");
     $("stat-points").textContent = contribution.acceptedPoints + " / " + contribution.plannedPoints + " points accepted"
-      + (contribution.remainingPoints < 0 ? " · 已超额 " + -contribution.remainingPoints + " 分，请修订计划" : "");
+      + (contribution.remainingPoints < 0 ? " · Over budget by " + -contribution.remainingPoints + " points. Revise the plan" : "");
     $("stat-my-points").textContent = contribution.hasAccepted ? fmtNumber(me ? me.points : 0) : "—";
     $("stat-my-share").textContent = contribution.hasAccepted
       ? fmtNumber(me ? me.points : 0) + " / " + contribution.acceptedPoints + " = " +
         fmtNumber(me ? me.sharePct : 0) + "% of accepted work"
-      : "暂无已验收贡献";
+      : "No accepted contributions yet";
     const pending = state.board.tasks.filter(function (task) {
       return !task.accepted && task.checkpointAt;
     });
@@ -614,7 +614,7 @@
           active.length > 1 ? h("span", { class: "active-count", text: " · " + (active.length - 1) + " more" }) : null));
         if (active.length > 1) {
           const more = h("details", { class: "member-more" },
-            h("summary", { text: "另有 " + (active.length - 1) + " 项任务 / show all" }));
+            h("summary", { text: "Plus " + (active.length - 1) + " tasks / show all" }));
           const list = h("ul", { class: "member-task-list" });
           active.slice(1).forEach(function (task) {
             list.append(h("li", null,
@@ -629,7 +629,7 @@
           main.append(more);
         }
       } else {
-        main.append(h("p", { class: "member-task muted", text: "尚未分配 / No active task" }));
+        main.append(h("p", { class: "member-task muted", text: "No active task" }));
       }
       const meta = h("div", { class: "member-meta" });
       if (row.nextCheckpoint) {
@@ -698,7 +698,7 @@
       return branchId === null || entry.branchId === branchId;
     });
     if (!entries.length) {
-      container.append(h("p", { class: "empty-state", text: "暂无已验收成果。" }));
+      container.append(h("p", { class: "empty-state", text: "No accepted work yet." }));
       return;
     }
     const groups = new Map();
@@ -720,9 +720,9 @@
             h("div", { class: "member-line" },
               h("span", { class: "mini-avatar", text: initials(entry.authors[0] ? entry.authors[0].name : "AC") }),
               h("strong", { text: entry.title }),
-              h("span", { class: "status-pill done", text: "已验收" })),
+              h("span", { class: "status-pill done", text: "Accepted" })),
             h("p", {
-              text: entry.branchName + " · 版本 v" + entry.version + " · " + entry.points + " 分 · 验收 " +
+              text: entry.branchName + " · Version v" + entry.version + " · " + entry.points + " points · Review " +
                 fmtDate(entry.acceptedAt, true)
             }),
             h("p", { class: "timeline-authors" },
@@ -731,7 +731,7 @@
                 entry.authors.forEach(function (author, index) {
                   if (index) wrap.append(h("span", { class: "dot-sep", text: " · " }));
                   wrap.append(h("span", {
-                    text: author.name + " " + fmtNumber(author.sharePct) + "% · " + fmtNumber(author.points) + "分"
+                    text: author.name + " " + fmtNumber(author.sharePct) + "% · " + fmtNumber(author.points) + " points"
                   }));
                 });
                 return wrap;
@@ -771,7 +771,7 @@
 
   function taskMeta(task) {
     return h("small", {
-      text: fmtDate(task.deadlineAt, true) + " · " + task.branchName + " · " + task.points + "分 · " +
+      text: fmtDate(task.deadlineAt, true) + " · " + task.branchName + " · " + task.points + " points · " +
         task.assigneeName
     });
   }
@@ -779,7 +779,7 @@
   function renderTodo(tasks) {
     const list = $("todo-list");
     clear(list);
-    if (!tasks.length) return list.append(emptyRow("没有待办任务。"));
+    if (!tasks.length) return list.append(emptyRow("No tasks to do."));
     tasks.forEach(function (task) {
       list.append(h("div", { class: "task-row clickable", onclick: function () { openTask(task.id); } },
         h("span", { class: "task-check", "aria-hidden": "true" }),
@@ -787,16 +787,16 @@
           h("strong", { text: task.title }),
           taskMeta(task),
           task.state === "needs_revision"
-            ? h("span", { class: "priority medium", text: "需提交修订版" })
+            ? h("span", { class: "priority medium", text: "A revised version is needed" })
             : null),
-        h("span", { class: "priority " + (task.state === "needs_revision" ? "medium" : "low"), text: task.state === "needs_revision" ? "修订" : "待办" })));
+        h("span", { class: "priority " + (task.state === "needs_revision" ? "medium" : "low"), text: task.state === "needs_revision" ? "Revision" : "To do" })));
     });
   }
 
   function renderReview(tasks) {
     const list = $("review-list");
     clear(list);
-    if (!tasks.length) return list.append(emptyRow("没有等待确认的成果。"));
+    if (!tasks.length) return list.append(emptyRow("No submissions awaiting review."));
     tasks.forEach(function (task) {
       const latest = task.latestSubmission || {};
       const actions = task.latestActions || {};
@@ -810,16 +810,16 @@
         h("div", null,
           h("strong", { text: task.title }),
           h("small", {
-            text: "版本 v" + latest.version + " · 待确认 · 由 " + (latest.submittedBy || "成员") + " 提交"
+            text: "Version v" + latest.version + " · Pending review · Submitted by " + (latest.submittedBy || "member")
           }),
-          needsYou ? h("span", { class: "needs-you-tag", text: "需要你处理" }) : null)));
+          needsYou ? h("span", { class: "needs-you-tag", text: "Your action is needed" }) : null)));
     });
   }
 
   function renderProblems(tasks) {
     const list = $("problem-list");
     clear(list);
-    if (!tasks.length) return list.append(emptyRow("没有受阻或待跟进的任务。"));
+    if (!tasks.length) return list.append(emptyRow("No blocked tasks or outstanding follow-ups."));
     tasks.forEach(function (task) {
       const support = task.support;
       list.append(h("button", {
@@ -830,10 +830,10 @@
           statusPill(task.state)),
         support
           ? h("p", { text: support.body })
-          : h("p", { text: "检查点后 24 小时仍无成果、说明或求助。" }),
-        support ? h("small", { text: "所需支持：" + support.neededSupport + " · " + support.userName }) : null,
+          : h("p", { text: "No submission, update or help request within 24 hours of the first reminder." }),
+        support ? h("small", { text: "Support needed: " + support.neededSupport + " · " + support.userName }) : null,
         task.followUpData
-          ? h("small", { text: "组内跟进标记于 " + fmtDate(task.followUpData.at, true) + " 出现" })
+          ? h("small", { text: "Follow-up flag raised at " + fmtDate(task.followUpData.at, true) })
           : null));
     });
   }
@@ -841,7 +841,7 @@
   function renderHelp(tasks) {
     const list = $("help-list");
     clear(list);
-    if (!tasks.length) return list.append(emptyRow("没有进行中的组内求助。"));
+    if (!tasks.length) return list.append(emptyRow("No open help requests."));
     tasks.forEach(function (task) {
       list.append(h("button", {
         class: "message-item clickable", type: "button", onclick: function () { openTask(task.id); }
@@ -850,7 +850,7 @@
           h("span", { class: "mini-avatar amber", text: initials(task.support.userName) }),
           h("strong", { text: task.support.userName })),
         h("p", { text: task.support.body }),
-        h("small", { text: "所需支持：" + task.support.neededSupport + " · " + task.title })));
+        h("small", { text: "Support needed: " + task.support.neededSupport + " · " + task.title })));
     });
   }
 
@@ -930,7 +930,7 @@
     const messages = state.board.messages.slice().reverse();
     const nodes = Array.from(list.children);
     if (!messages.length) {
-      if (!nodes.length || nodes[0].dataset.messageId) list.replaceChildren(emptyRow("还没有群聊消息。"));
+      if (!nodes.length || nodes[0].dataset.messageId) list.replaceChildren(emptyRow("No chat messages yet."));
       return;
     }
     if (nodes.length === messages.length && nodes.every(function (node, index) {
@@ -959,7 +959,7 @@
       h("p", { text: message.body }));
     if (message.taskId) {
       item.append(h("button", {
-        class: "task-chip", type: "button", text: "任务：" + (message.taskTitle || ("#" + message.taskId)),
+        class: "task-chip", type: "button", text: "Task: " + (message.taskTitle || ("#" + message.taskId)),
         onclick: function () { openTask(message.taskId); }
       }));
     }
@@ -979,7 +979,7 @@
     const list = $("reports-list");
     clear(list);
     if (!state.board.reports.length) {
-      list.append(emptyRow("没有举报。验收未通过不会自动创建举报。"));
+      list.append(emptyRow("No disputes. A rejected submission does not open a dispute automatically."));
       return;
     }
     state.board.reports.forEach(function (report) {
@@ -988,7 +988,7 @@
       },
         h("span", { class: "mini-avatar violet", text: "!" }),
         h("div", null,
-          h("strong", { text: "举报 #" + report.id + " · " + report.taskTitle }),
+          h("strong", { text: "Dispute #" + report.id + " · " + report.taskTitle }),
           h("small", { text: report.reporter + " · " + fmtDate(report.createdAt, true) + " · " + (STATUS_LABELS[report.status] || report.status) }))));
     });
   }
@@ -1031,7 +1031,7 @@
       h("span", { class: "mode-badge " + (response.mode === "local-model" ? "local" : response.mode === "test-double" ? "test" : "fallback"),
         text: response.modeLabel }),
       h("span", { class: "muted-note", text: "votes excluded · chat excluded" })));
-    box.append(h("h3", { class: "answer-heading", text: "结论 / Answer" }));
+    box.append(h("h3", { class: "answer-heading", text: "Answer" }));
     box.append(h("pre", { class: "answer-text", text: response.answer }));
     if (response.modelError) box.append(h("p", { class: "error-text", text: response.modelError }));
     if (response.citations && response.citations.length) {
@@ -1142,17 +1142,17 @@
               " = " + fmtNumber(member.sharePct) + "%" })));
         const list = h("ul", { class: "report-achievements" });
         const items = achievements.get(member.id) || [];
-        if (!items.length) list.append(h("li", { text: "暂无已验收成果" }));
+        if (!items.length) list.append(h("li", { text: "No accepted work yet" }));
         items.forEach(function (item) {
           list.append(h("li", {
-            text: item.title + "（v" + item.version + "：" + item.taskPoints + " 分 × " +
-              fmtNumber(item.sharePct) + "% = " + fmtNumber(item.memberPoints) + " 分）"
+            text: item.title + " (v" + item.version + ": " + item.taskPoints + " points × " +
+              fmtNumber(item.sharePct) + "% = " + fmtNumber(item.memberPoints) + " points)"
           }));
         });
         details.append(list);
         cell.append(details);
       } else {
-        cell.textContent = "暂无已验收贡献";
+        cell.textContent = "No accepted contributions yet";
       }
       body.append(h("tr", null, h("td", { text: member.name }), cell));
     });
@@ -1171,7 +1171,7 @@
         h("td", {
           text: branch.hasAccepted
             ? branch.acceptedPoints + " / " + branch.plannedPoints + " = " + fmtNumber(branch.completionPct) + "%"
-            : "暂无已验收贡献"
+            : "No accepted contributions yet"
         })));
     });
     branchTable.append(branchBody);
@@ -1183,7 +1183,7 @@
         const version = task.versions.find(function (v) { return v.version === task.score.version; });
         box.append(h("div", { class: "report-task" },
           h("strong", { text: task.title }),
-          h("span", { text: " · 版本 v" + task.score.version + " · " + task.score.points + " 分" }),
+          h("span", { text: " · Version v" + task.score.version + " · " + task.score.points + " points" }),
           h("p", {
             class: "muted",
             text: version ? version.authors.map(function (a) { return a.name + " " + fmtNumber(a.sharePct) + "%"; }).join(" · ") : ""
@@ -1196,15 +1196,15 @@
     }
     (data.disputes || []).forEach(function (report) {
       const facts = report.facts;
-      const preview = h("details", { class: "detail-block" }, h("summary", { text: "举报 #" + report.id + " · " + report.taskTitle }),
-        h("p", { text: "举报时负责人 " + (facts.plan.assignee || "资料缺失") + " · " +
-          (facts.plan.authors.map(function (author) { return author.name + " " + author.sharePct + "%"; }).join("、") || "署名资料缺失")
-          + " · 截止 " + fmtDateTime(facts.plan.currentDeadlineAt) }));
+      const preview = h("details", { class: "detail-block" }, h("summary", { text: "Dispute #" + report.id + " · " + report.taskTitle }),
+        h("p", { text: "Assignee at filing " + (facts.plan.assignee || "Record unavailable") + " · " +
+          (facts.plan.authors.map(function (author) { return author.name + " " + author.sharePct + "%"; }).join(", ") || "Author details unavailable")
+          + " · Deadline " + fmtDateTime(facts.plan.currentDeadlineAt) }));
       facts.reassignments.slice().reverse().forEach(function (change) {
-        preview.append(h("p", { text: "交接 " + fmtDateTime(change.createdAt) + " · " + change.fromName + " → " + change.toName + " · " + change.reason }));
+        preview.append(h("p", { text: "Handoff " + fmtDateTime(change.createdAt) + " · " + change.fromName + " → " + change.toName + " · " + change.reason }));
       });
       facts.dateChanges.slice().reverse().forEach(function (change) {
-        preview.append(h("p", { text: "延期 " + fmtDateTime(change.decidedAt || change.createdAt) + " · " +
+        preview.append(h("p", { text: "Extension " + fmtDateTime(change.decidedAt || change.createdAt) + " · " +
           fmtDateTime(change.oldDeadline) + " → " + fmtDateTime(change.newDeadline) + " · " + change.reason }));
       });
       box.append(preview);
@@ -1384,8 +1384,8 @@
     }
 
     const agreement = h("section", { class: "detail-step" },
-      detailStepHead("01", "当前分工 / Current plan",
-        "各版详情保留该版提交时的标准与署名。"));
+      detailStepHead("01", "Current agreement",
+        "Each version retains its original criteria and authors."));
     const meta = h("div", { class: "task-meta-grid" });
     meta.append(metaCell("Checkpoint", fmtDateTime(task.checkpointAt)));
     meta.append(metaCell("Deadline", fmtDateTime(task.deadlineAt)));
@@ -1393,7 +1393,7 @@
     meta.append(metaCell("Branch", task.branchName));
     agreement.append(meta);
     const authorBox = h("div", { class: "author-list" });
-    authorBox.append(h("span", { class: "meta-label", text: "下次提交的署名与比例" }));
+    authorBox.append(h("span", { class: "meta-label", text: "Authors and shares for the next submission" }));
     task.planAuthors.forEach(function (author) {
       authorBox.append(h("span", { class: "author-chip", text: author.name + " · " + fmtNumber(author.sharePct) + "%" }));
     });
@@ -1404,12 +1404,12 @@
     agreement.append(descriptionGrid);
 
     const submissionStep = h("section", { class: "detail-step" },
-      detailStepHead("02", "本次提交 / This submission",
+      detailStepHead("02", "Submission",
         "A version freezes the deliverable, authors, shares, criteria and eligible voters. Earlier versions remain visible."));
     submissionStep.append(renderSubmissions(task, highlightSubmission));
 
     const criteriaStep = h("section", { class: "detail-step" },
-      detailStepHead("03", "逐条验收标准 / Criteria",
+      detailStepHead("03", "Acceptance criteria",
         "The version freezes this list. The result is decided for the whole version, not by showing who voted or how."));
     criteriaStep.append(renderCriteriaChecklist(task));
 
@@ -1421,7 +1421,7 @@
 
     if (task.canSubmit) {
       actions.append(actionPanel("Submit a new version",
-        "粘贴成果正文或上传 PDF。",
+        "Paste the deliverable text or upload a PDF.",
         buildSubmissionForm(task)));
     }
 
@@ -1431,7 +1431,7 @@
 
     if (task.state !== "accepted") {
       actions.append(actionPanel("Ask for help or record a blocker",
-        "An unresolved help request or blocker marks the task as 受阻 in the notice board and shows the needed support.",
+        "An unresolved help request or blocker marks the task as Blocked in the notice board and shows the needed support.",
         buildSupportForm(task)));
 
       actions.append(actionPanel("Negotiate a deadline",
@@ -1440,10 +1440,10 @@
 
       if (state.board && state.board.project.isOwner) {
         actions.append(actionPanel("Reassign the task",
-          "只更换负责人，保留所有署名与比例。",
+          "Change assignee only, keep the authors and shares.",
           buildReassignForm(task)));
-        actions.append(actionPanel("编辑新版署名和比例",
-          "修改对下一次提交生效。", buildAuthorsForm(task)));
+        actions.append(actionPanel("Edit authors and shares for the next version",
+          "Changes apply to the next submission.", buildAuthorsForm(task)));
       }
     }
 
@@ -1470,19 +1470,19 @@
     const latest = task.submissions && task.submissions.length ? task.submissions[0] : null;
     const criteria = (latest ? latest.criteriaSnapshot : task.acceptanceCriteria) || "";
     const outcome = latest ? latest.status : "none";
-    const outcomeLabel = latest ? stateLabelForSubmission(latest.status) : "尚无提交";
+    const outcomeLabel = latest ? stateLabelForSubmission(latest.status) : "No submissions yet";
     const outcomeClass = latest && latest.status === "accepted" ? "done"
       : latest && latest.status === "pending" ? "working" : "blocked";
     const box = h("div", { class: "criteria-review" });
     box.append(h("div", { class: "criteria-outcome" },
-      h("span", { class: "meta-label", text: "整版结果 / Version outcome" }),
+      h("span", { class: "meta-label", text: "Version outcome" }),
       h("span", { class: "status-pill " + outcomeClass, text: outcomeLabel }),
       h("span", { class: "muted", text: latest
-        ? "版本 v" + latest.version + " · 标准随该版冻结"
-        : "尚无提交，显示原约定标准" })));
+        ? "Version v" + latest.version + " · Criteria frozen for this version"
+        : "No submissions yet. Showing the original criteria" })));
     const list = h("ol", { class: "criteria-list" });
     const lines = criteria.split(/\r?\n/).map(function (line) {
-      return line.trim().replace(/^[-*\d.、) ]+/, "");
+      return line.trim().replace(/^[-*\d., ) ]+/, "");
     }).filter(Boolean);
     if (!lines.length) {
       list.append(h("li", { text: "No acceptance criteria recorded." }));
@@ -1528,7 +1528,7 @@
     form.append(labelled("Artifact content (text is frozen into the version)", h("textarea", { name: "artifactText", rows: "6", maxlength: "20000", placeholder: "Paste the deliverable text. Links alone are not frozen evidence." })));
     form.append(h("p", { class: "muted-note", text: "Version " + ((task.submissions && task.submissions[0] ? task.submissions[0].version : 0) + 1) + " will freeze these authors: " + task.planAuthors.map(function (a) { return a.name + " " + fmtNumber(a.sharePct) + "%"; }).join(", ") }));
     const source = h("input", { name: "pdf", type: "file", accept: "application/pdf,.pdf" });
-    form.append(labelled("PDF 附件（最多 1 MiB）", source));
+    form.append(labelled("PDF attachment (up to 1 MiB)", source));
     const draft = getSubmissionDraft(task);
     source.addEventListener("change", function () {
       const currentDraft = submissionDrafts.get(task.id);
@@ -1546,11 +1546,11 @@
     }
     form.append(h("p", { role: "status", class: "error-text", id: "submission-error" }));
     const pending = task.submissions.some(function (version) { return version.status === "pending"; });
-    if (pending) form.append(h("p", { class: "banner warning", text: "本轮仍在待确认。可以保存草稿，请由本版署名作者先撤回后再提交。" }));
+    if (pending) form.append(h("p", { class: "banner warning", text: "This round is still pending. You can save a draft. An author must withdraw this round before submitting again." }));
     form.append(h("div", { class: "button-row" },
-      h("button", { type: "button", class: "outline-button", text: "保存草稿", onclick: function () {
+      h("button", { type: "button", class: "outline-button", text: "Save draft", onclick: function () {
         saveSubmissionDraft(task, form);
-        toast("草稿已保存。刷新后可继续编辑正文；附件需重新选择。");
+        toast("Draft saved. You can continue editing after refreshing. Select the attachment again.");
       } }),
       h("button", { type: "submit", text: "Submit new version" })));
     return form;
@@ -1591,13 +1591,13 @@
 
   async function readPdf(file) {
     if (!file.name.toLowerCase().endsWith(".pdf") || (file.type && file.type !== "application/pdf")) {
-      throw new Error("请选择 PDF 文件。");
+      throw new Error("Please select a PDF file.");
     }
-    if (file.size > 1048576) throw new Error("PDF 附件不能超过 1 MiB。");
+    if (file.size > 1048576) throw new Error("The PDF exceeds 1 MiB.");
     return new Promise(function (resolve, reject) {
       const reader = new FileReader();
       reader.onload = function () { resolve(String(reader.result).split(",", 2)[1]); };
-      reader.onerror = function () { reject(new Error("读取 PDF 失败，请重试。")); };
+      reader.onerror = function () { reject(new Error("Reading PDF failed. Try again.")); };
       reader.readAsDataURL(file);
     });
   }
@@ -1616,20 +1616,20 @@
     });
     function update() {
       const entries = authorChanges(authors);
-      summary.textContent = "原署名 " + previous.join("、") + " → 新署名 "
-        + (entries.map(function (author) { return author.name + " " + author.sharePct + "%"; }).join("、") || "未选择")
-        + "。合计 " + fmtNumber(entries.reduce(function (sum, author) { return sum + author.sharePct; }, 0)) + "%";
+      summary.textContent = "Previous authors " + previous.join(", ") + " → New authors "
+        + (entries.map(function (author) { return author.name + " " + author.sharePct + "%"; }).join(", ") || "None selected")
+        + ". Total " + fmtNumber(entries.reduce(function (sum, author) { return sum + author.sharePct; }, 0)) + "%";
     }
     authors.addEventListener("input", update);
     update();
     form.append(authors, summary,
-      labelled("修改原因", h("textarea", { name: "reason", maxlength: "2000", required: true })),
-      h("button", { type: "submit", text: "保存新版署名" }));
+      labelled("Reason for change", h("textarea", { name: "reason", maxlength: "2000", required: true })),
+      h("button", { type: "submit", text: "Save authors" }));
     form.addEventListener("submit", function (event) {
       event.preventDefault();
       guard(async function () {
         await taskRequest(task.id, "/authors", { authors: authorChanges(authors), reason: form.elements.reason.value });
-        toast("新版署名已更新。");
+        toast("Authors updated.");
       });
     });
     return form;
@@ -1700,7 +1700,7 @@
         h("div", { class: "member-line" },
           h("strong", { text: support.kind === "help" ? "Help requested" : "Blocker" }),
           h("span", { class: "muted", text: " · " + support.userName + " · " + fmtDateTime(support.createdAt) }),
-          support.resolvedAt ? h("span", { class: "status-pill done", text: "已处理" }) : h("span", { class: "status-pill blocked", text: "未解决" })),
+          support.resolvedAt ? h("span", { class: "status-pill done", text: "Resolved" }) : h("span", { class: "status-pill blocked", text: "Unresolved" })),
         h("p", { text: support.body }),
         h("p", { class: "muted", text: "Needed: " + support.neededSupport }));
       if (!support.resolvedAt) {
@@ -1728,13 +1728,13 @@
       h("div", { class: "slot-placeholder" },
         h("span", { class: "slot-purpose", text: "submission-preview" }),
         h("strong", { class: "slot-doc", text: submission.artifactName || "Untitled text submission" }),
-        h("span", { class: "slot-meta", text: "v" + submission.version + " · 暂无预览 / No preview · 4:3 · 1200 × 900 recommended" })),
+        h("span", { class: "slot-meta", text: "v" + submission.version + " · No preview available · 4:3 · 1200 × 900 recommended" })),
       h("figcaption", { text: "No preview image has been provided. The title, version and text submission remain available; this slot is an example attachment and is not used for contribution calculation." }));
   }
 
   function renderSubmissions(task, highlightSubmission) {
     const box = h("div", { class: "submission-list" });
-    box.append(h("p", { class: "muted-note", text: "A version stays 待确认 until every frozen author confirms and every frozen voter votes. During voting the group only sees 待确认. Vote choices, counts and vote times are never shown." }));
+    box.append(h("p", { class: "muted-note", text: "A version stays Pending review until every frozen author confirms and every frozen voter votes. During voting the group only sees Pending review. Vote choices, counts and vote times are never shown." }));
     if (!task.submissions || !task.submissions.length) {
       box.append(h("p", { class: "empty-state", text: "No submission yet." }));
       return box;
@@ -1753,16 +1753,16 @@
       card.append(head);
 
       if (submission.withdrawalReason) {
-        card.append(h("p", { class: "muted-note", text: "撤回原因：" + submission.withdrawalReason }));
+        card.append(h("p", { class: "muted-note", text: "Withdrawal reason: " + submission.withdrawalReason }));
       }
       if (submission.attachmentUrl) {
         card.append(h("a", {
           class: "task-chip", href: submission.attachmentUrl, target: "_blank", rel: "noopener",
-          text: "打开 PDF · " + submission.artifactName
+          text: "Open PDF · " + submission.artifactName
         }));
       }
       card.append(h("button", {
-        type: "button", class: "outline-button small", text: "询问此版本",
+        type: "button", class: "outline-button small", text: "Ask about this version",
         onclick: function () {
           setEvidenceContext(task, submission);
           closeDialog("task-dialog");
@@ -1779,7 +1779,7 @@
       submission.authors.forEach(function (author) {
         authorLine.append(h("span", { class: "author-chip" },
           author.name + " · " + fmtNumber(author.sharePct) + "%" +
-          (!actions.allAuthors && submission.status === "pending" ? (author.confirmed ? " · 已确认" : " · 待确认") : "")));
+          (!actions.allAuthors && submission.status === "pending" ? (author.confirmed ? " · Confirmed" : " · Pending review") : "")));
       });
       card.append(authorLine);
 
@@ -1788,7 +1788,7 @@
         h("div", { class: "detail-block" }, h("span", { class: "meta-label", text: "Delivery summary" }),
           h("p", { text: submission.content || "—" })),
         submission.artifactText ? h("div", { class: "detail-block" },
-          h("span", { class: "meta-label", text: submission.artifactName || "成果正文" }),
+          h("span", { class: "meta-label", text: submission.artifactName || "Deliverable text" }),
           h("pre", { class: "artifact-text", text: submission.artifactText })) : null,
         h("div", { class: "detail-block" }, h("span", { class: "meta-label", text: "Acceptance criteria at submission time" }),
           h("pre", { class: "criteria-text", text: submission.criteriaSnapshot }))));
@@ -1796,8 +1796,8 @@
       if (submission.status === "pending") {
         if (actions.canWithdraw) {
           const withdraw = h("form", { class: "stack-form compact" },
-            labelled("撤回原因", h("textarea", { name: "reason", required: true, maxlength: "2000", rows: "2" })),
-            h("button", { class: "outline-button", type: "submit", text: "撤回整轮验收" }));
+            labelled("Withdrawal reason", h("textarea", { name: "reason", required: true, maxlength: "2000", rows: "2" })),
+            h("button", { class: "outline-button", type: "submit", text: "Withdraw review round" }));
           withdraw.addEventListener("submit", function (event) {
             event.preventDefault();
             guard(async function () {
@@ -1806,7 +1806,7 @@
               await taskRequest(task.id, "/submissions/" + submission.id + "/withdraw", {
                 reason: withdraw.elements.reason.value
               });
-              toast("本轮验收已撤回。");
+              toast("Review round withdrawn.");
             });
           });
           card.append(withdraw);
@@ -1831,23 +1831,23 @@
             card.append(h("p", { class: "muted-note", text: "Co-authors sign off above. Every other frozen member votes once and anonymously below." }));
           }
           if (actions.inferenceWarning) {
-            card.append(h("div", { class: "banner warning", text: actions.inferenceWarning + " 两人组只有一名非作者时，提交人可能从结论推知你的选择；请在投票前知悉这一点。" }));
+            card.append(h("div", { class: "banner warning", text: actions.inferenceWarning }));
           }
           card.append(h("div", { class: "button-row vote-row" },
             h("button", {
-              class: "vote-button", type: "button", text: "匿名同意 / Agree",
+              class: "vote-button", type: "button", text: "Agree anonymously",
               onclick: function () {
                 castVote(task.id, submission.id, "agree", actions);
               }
             }),
             h("button", {
-              class: "vote-button", type: "button", text: "匿名不同意 / Disagree",
+              class: "vote-button", type: "button", text: "Disagree anonymously",
               onclick: function () {
                 castVote(task.id, submission.id, "disagree", actions);
               }
             })));
         } else {
-          card.append(h("p", { class: "muted-note", text: "This version is still 待确认. Waiting for frozen participants; no counts or choices are displayed." }));
+          card.append(h("p", { class: "muted-note", text: "This version is still Pending review. Waiting for frozen participants; no counts or choices are displayed." }));
         }
       }
       box.append(card);
@@ -1956,7 +1956,7 @@
       box.append(h("button", {
         class: "compact-item clickable", type: "button", onclick: function () { openReport(report.id); }
       }, h("span", { class: "mini-avatar violet", text: "!" }),
-        h("div", null, h("strong", { text: "举报 #" + report.id + " · " + (STATUS_LABELS[report.status] || report.status) }),
+        h("div", null, h("strong", { text: "Dispute #" + report.id + " · " + (STATUS_LABELS[report.status] || report.status) }),
           h("small", { text: report.reason }))));
     });
     return box;
@@ -2114,16 +2114,16 @@
     const facts = report.facts;
     if (facts) {
       root.append(h("section", { class: "task-section" },
-        h("h3", { text: "已记录的事实 / Recorded facts" }),
-        h("p", { text: "举报时的分工 · 负责人 " + (facts.plan.assignee || "资料缺失") + " · " + facts.plan.points + " 分" }),
-        h("p", { class: "muted", text: "约定检查点 " + fmtDateTime(facts.plan.checkpointAt) + " · 截止 " + (facts.plan.currentDeadlineAt ? fmtDateTime(facts.plan.currentDeadlineAt) : "资料缺失") }),
-        h("p", { class: "muted", text: "举报时的署名 " + (facts.plan.authors.map(function (a) { return a.name + " " + fmtNumber(a.sharePct) + "%"; }).join(" · ") || "资料缺失") }),
+        h("h3", { text: "Recorded facts" }),
+        h("p", { text: "Agreement at filing · Assignee " + (facts.plan.assignee || "Record unavailable") + " · " + facts.plan.points + " points" }),
+        h("p", { class: "muted", text: "Agreed checkpoint " + fmtDateTime(facts.plan.checkpointAt) + " · Deadline " + (facts.plan.currentDeadlineAt ? fmtDateTime(facts.plan.currentDeadlineAt) : "Record unavailable") }),
+        h("p", { class: "muted", text: "Authors at filing " + (facts.plan.authors.map(function (a) { return a.name + " " + fmtNumber(a.sharePct) + "%"; }).join(" · ") || "Record unavailable") }),
         facts.plan.historyNote ? h("p", { class: "muted-note", text: facts.plan.historyNote }) : null,
         (facts.reassignments || []).slice().reverse().map(function (change) {
-          return h("p", { text: "交接 " + fmtDateTime(change.createdAt) + " · " + change.fromName + " → " + change.toName + " · " + change.reason });
+          return h("p", { text: "Handoff " + fmtDateTime(change.createdAt) + " · " + change.fromName + " → " + change.toName + " · " + change.reason });
         }),
         (facts.dateChanges || []).slice().reverse().map(function (change) {
-          return h("p", { text: "延期 " + fmtDateTime(change.decidedAt || change.createdAt) + " · "
+          return h("p", { text: "Extension " + fmtDateTime(change.decidedAt || change.createdAt) + " · "
             + fmtDateTime(change.oldDeadline) + " → " + fmtDateTime(change.newDeadline)
             + " · " + stateLabelForSubmission(change.status) + " · " + change.reason });
         }),
@@ -2136,14 +2136,14 @@
         }).join(" · ") : "none") })));
     }
 
-    const statements = h("section", { class: "task-section" }, h("h3", { text: "成员陈述 / Statements" }));
+    const statements = h("section", { class: "task-section" }, h("h3", { text: "Member statements" }));
     if (!report.statements.length) {
       statements.append(h("p", { class: "empty-state", text: "No statements yet." }));
     }
     report.statements.forEach(function (statement) {
       statements.append(h("div", { class: "statement " + statement.kind },
         h("div", { class: "member-line" },
-          h("strong", { text: statement.kind === "response" ? "被涉及者回应" : "未涉事者复核" }),
+          h("strong", { text: statement.kind === "response" ? "Responses from involved members" : "Independent reviews" }),
           h("span", { class: "muted", text: " · " + statement.author + " · " + fmtDateTime(statement.createdAt) })),
         h("p", { text: statement.body })));
     });
@@ -2241,21 +2241,21 @@
         member.id === project.ownerId ? h("span", { class: "status-pill done", text: "owner" }) : null));
     });
     if (!project.isOwner) {
-      members.append(h("button", { type: "button", class: "outline-button", text: "退出项目", onclick: function () {
-        if (!window.confirm("退出「" + project.name + "」？历史成果和贡献会保留。")) return;
+      members.append(h("button", { type: "button", class: "outline-button", text: "Leave project", onclick: function () {
+        if (!window.confirm("Leave ‘" + project.name + "’? Historical work and contributions will be retained.")) return;
         guard(async function () {
           await api("/api/projects/" + project.id + "/leave", { method: "POST", body: {} });
           closeDialog("settings-dialog");
           updateUrl({ project: null, task: null, submission: null });
           await refreshProjects();
-          toast("已退出项目。");
+          toast("You have left the project.");
         });
       } }));
     }
     root.append(members);
 
     const branches = h("div", { class: "settings-section" }, h("h3", { text: "Branches and planned points" }));
-    branches.append(h("p", { text: "项目 · " + budgetText(project) }));
+    branches.append(h("p", { text: "Project · " + budgetText(project) }));
     if (project.isOwner) branches.append(planRevision(project, null, openSettings));
     state.board.branches.forEach(function (branch) {
       branches.append(h("div", { class: "settings-row" },
@@ -2281,7 +2281,7 @@
       })));
     (state.board.planChanges || []).forEach(function (change) {
       branches.append(h("p", { class: "muted-note", text: fmtDateTime(change.createdAt) + " · "
-        + (change.branchName || "项目") + " " + change.oldPoints + " → " + change.newPoints + " 分 · " + change.reason }));
+        + (change.branchName || "Project") + " " + change.oldPoints + " → " + change.newPoints + " points · " + change.reason }));
     });
     root.append(branches);
 
@@ -2297,22 +2297,22 @@
   }
 
   function budgetText(budget) {
-    return "计划 " + budget.plannedPoints + " 分，已分配 " + budget.assignedPoints + " 分，剩余 "
-      + budget.remainingPoints + " 分" + (budget.remainingPoints < 0 ? "，请修订计划分" : "");
+    return "Plan " + budget.plannedPoints + " points, allocated " + budget.assignedPoints + " points, remaining "
+      + budget.remainingPoints + " points" + (budget.remainingPoints < 0 ? ", Revise planned points" : "");
   }
 
   function planRevision(project, branch, onSaved) {
     const budget = branch || project;
-    const label = branch ? branch.name : "项目";
+    const label = branch ? branch.name : "Project";
     const points = h("input", { type: "number", min: "1", max: "10000", step: "1", value: budget.plannedPoints });
     const reason = h("textarea", { rows: "2", maxlength: "2000" });
     const result = h("p", { class: "error-text", role: "status" });
     const fields = h("div", { class: "stack-form compact" },
-      labelled("新计划分", points), labelled("修订原因", reason), result);
-    const save = h("button", { type: "button", text: "保存计划修订", onclick: async function () {
+      labelled("New planned points", points), labelled("Reason for revision", reason), result);
+    const save = h("button", { type: "button", text: "Save plan revision", onclick: async function () {
       result.textContent = "";
       if (!points.value || !points.checkValidity() || !reason.value.trim()) {
-        result.textContent = "请填写有效分值和修订原因。";
+        result.textContent = "Enter valid points and a reason.";
         return;
       }
       save.disabled = true;
@@ -2322,7 +2322,7 @@
         await api("/api/projects/" + project.id + "/plan", { method: "POST", body: data });
         await loadBoard();
         if (project.id === state.projectId) onSaved();
-        toast("计划分已修订。");
+        toast("Planned points updated.");
       } catch (error) {
         result.textContent = error.message;
       } finally {
@@ -2331,7 +2331,7 @@
     } });
     fields.append(save);
     return h("details", { class: "detail-block" },
-      h("summary", { text: "修订" + label + "计划分" }), fields);
+      h("summary", { text: "Revise " + label + " budget" }), fields);
   }
 
   function renderTaskBudget() {
@@ -2342,12 +2342,12 @@
     const hint = h("p", { class: "muted-note" });
     function update() {
       const points = Number(form.elements.points.value) || 0;
-      const balances = [{ name: "项目", budget: project }];
-      if (branch) balances.push({ name: "分支", budget: branch });
+      const balances = [{ name: "Project", budget: project }];
+      if (branch) balances.push({ name: "Branch", budget: branch });
       hint.textContent = balances.map(function (item) {
         const gap = points - item.budget.remainingPoints;
-        return item.name + " · " + budgetText(item.budget) + (gap > 0 ? "，超出 " + gap + " 分" : "");
-      }).join("；");
+        return item.name + " · " + budgetText(item.budget) + (gap > 0 ? ", over by " + gap + " points" : "");
+      }).join("; ");
     }
     panel.replaceChildren(hint);
     if (project.isOwner) {

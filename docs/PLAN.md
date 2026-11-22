@@ -1,39 +1,42 @@
-# Anti-freerider 第一版产品方案
+# Product plan for the first release
 
-先做适配电脑和手机的网页，用一个虚构的课程小组在本地跑完一次作业。首版要让成员随时能回答三个问题：**现在谁负责什么、哪项工作需要跟进、结项时每个人的贡献是怎么算出来的。** 独立 App 放在网页试用之后。
+Build a locally runnable website for desktop and mobile screens. Use a fictional course team to try a full assignment. Throughout the assignment each member should be able to identify the person responsible for a task, work that needs follow-up, and the calculation behind each person's final contribution. A standalone app can follow the web trial.
 
-## 组队、沟通与项目进度
+## Teams, communication and progress
 
-- 学生创建小组，用邀请链接或邀请码加入已有队友。一个用户可以同时参与多个项目。沿用现有暗色界面，左侧列出项目，选中后进入对应工作区。
-- 项目按「项目 → 分支 → 任务」组织。例如调查作业可以分为问卷设计、数据收集和分析报告。开工前为任务约定负责人、共同作者、检查点、截止时间、预期成果、验收标准和任务分值。
-- 工作区中上方是组内公告栏。每位成员占一行，显示当前任务、下一个检查点和是否需要帮助。其下按时间展示已验收成果，支持按分支查看。下方保留待办、待验收、遇到问题和组内求助四个区域。
-- 成员可以在项目群聊中直接交流，也可以把消息关联到任务。例如“还缺两组访谈数据”可以关联到分析任务，组员便能从进度页看到原因。需要计入贡献的访谈、协调或复核工作，可以整理成有署名、可验收的成果。
+Students can create a project, invite teammates by code or link and participate in several projects. The dark workspace has a project selector on the left. Organize each project into branches and tasks, such as survey design, data collection and analysis. Before work starts, agree on an assignee, co-authors, shares, checkpoint, deadline, expected output, criteria and point value.
 
-## 匿名验收与贡献计算
+The notice board has a row for each member. Show the current task, next checkpoint and any help needed. Below it, group accepted work by date and allow filtering by branch. Keep queues for tasks to do, work awaiting review, blockers and team requests. Members can link chat messages to tasks. Coordination, interviews and review work can earn credit when recorded as named, reviewable deliverables.
 
-- **每次验收针对一个固定版本。** 提交时固定成果、验收标准、任务分值、作者及分配比例（合计 100%），并记录本轮有资格参与的成员。之后加入项目的成员从下一版起参与。每位署名作者亲自确认本版即表示同意，其他成员每人投一次匿名的「同意 / 不同意」。如果全组都是作者，则全员另行匿名投票。
-- 所需确认和匿名票尚未收齐时，即使已收到反对票，组内也只看到「待确认」。收齐后全票同意显示「通过」，否则显示「未通过」。未通过的版本保留且不计分；作者修订后提交新版，独立验收。同一任务最多计分一次。验收针对成果是否达到约定标准，**一次未通过不会自动触发对个人的举报**。
-- **未收齐时可以撤回整轮。** 遇到成员离组或需要换稿，仍在项目中的本版作者可以填写原因并撤回。离组或保存新稿本身不会结束本轮。旧版本、撤回原因和日期保留在时间线上，本轮显示「已撤回」，停止收票、不计分，也不公开已有投票。提交新版时按当时的成员和署名重新确定资格，所有确认和票从头收集。最后一票与撤回同时到达时，只能有一个终态：已完成的轮次不能再撤回，已撤回的轮次不能再完成。
-- 匿名适用于组员界面、通知、AI 对话和导出报告。系统需要校验投票资格并防止重复投票，但这些出口都不显示个人选择、票数或投票时间。两人组只有一名非作者时，提交人可能从结论推知对方的选择，投票前应说明这个限制。
-  成员可访问的接口也遵守这一边界：可返回成果署名、版本提交日期和最终验收日期，不向他人返回谁已投、谁未投或个人投票记录。
-- **项目完成度**按「已验收任务分值 ÷ 项目计划总分」计算，分支使用相同口径。**个人贡献占比**按「个人已验收分值 ÷ 全组已验收分值」计算。共同完成的任务按开工时约定的比例分配。例如项目共 100 分，已验收 60 分，其中一人获得 15 分，页面同时显示“项目完成 60%”和“该成员占已验收贡献的 25%”。尚无成果通过时，显示「暂无已验收贡献」。
-  区分零分和零分母：项目已计划 100 分且已验收 0 分时，项目完成度为 0%，个人占比尚无分母。全组已验收 60 分时，取得 0 分的成员占比为 0%。报告保留通过的版本、原任务分和作者比例，用原值汇总后再对显示值取舍，便于复算。
+## Anonymous review and contributions
 
-## 提醒、举报与 AI 对话
+Each round covers a fixed version. Freeze the deliverable, criteria, task points, authors, shares totaling 100% and eligible participants at submission. New members join subsequent rounds. Each author confirms the version individually, and each eligible non-author casts one anonymous agree or disagree ballot. When everyone is an author, everyone also casts an anonymous ballot.
 
-- **及时提醒。** 到检查点仍没有成果、说明或求助时，先私下提醒负责人。24 小时从该检查点的首次私下提醒起算；其间收到任务提交、进度说明或求助，就不触发这次组内提醒。满 24 小时仍无回应，才显示「待跟进」。刷新或重启不重复提醒，也不重置计时。已求助的任务显示阻碍和所需支持；已提交的成果提醒有资格处理的人。
-- **人工举报。** 成员从具体任务发起举报，附上原分工、约定日期、提醒记录和交付情况。被涉及的成员可补充说明，未涉事成员参与组内复核。争议仍未解决时，由学生预览、选择并导出材料，自行交给老师。导出中区分已记录的事实、成员陈述和待解决的分歧。
-- **AI 对话。** 成员可以问“谁完成了问卷分析”“这份报告达到哪几条标准”“数据收集分支为什么延期”。AI 的质量判断仅依据提交物、预先约定的标准和验收记录，每项结论链接到对应版本或记录。材料不足就指出缺少什么。例如“已提交三张图，文档中未找到抽样方法；当前仍待组员验收”。贡献数字由系统计算，AI 负责解释；日常群聊不进入质量评估。
+Until all confirmations and ballots arrive, members see **Pending review**, even after an early disagreement. Unanimity accepts the version. Any disagreement rejects it once collection finishes. Retain rejected versions without awarding points. A revision starts a fresh round. Each task earns points at most once. Rejection alone never files a dispute against a person.
 
-## 本地试用与验收
+A current member who authored a pending version may give a reason and withdraw the whole round. Leaving the project or saving a draft keeps the round open. Record the withdrawn deliverable, reason and date on the timeline. Close collection, award no points and keep ballots private. A new version determines eligibility again and collects fresh responses. If withdrawal and the final response arrive together, only one can close the round.
 
-用一个四人、两分支的示例项目验证完整流程。任务的「受阻／待跟进」描述需要怎样协作；版本的「待确认／通过／未通过／已撤回」描述本轮验收状态，分别记录。例如，v1 未通过后，作者为修订请求访谈数据：公告栏显示任务受阻，v1 仍保留未通过的结论。
+The UI, member APIs, notifications, evidence assistant and exports must protect individual choices, participation, counts and ballot times. Public records may show authorship, submission time and final acceptance time. In a two-person group with one non-author the submitter may infer the other member’s choice. Warn the voter before they vote.
 
-| 试用情形 | 应观察到的结果 |
+Project completion is accepted task points divided by planned project points. Use the branch’s own totals for branch completion. Each person earns accepted task points multiplied by their frozen share, summed across tasks. Divide personal points by all accepted points to obtain their contribution percentage. With 100 planned and 60 accepted, a member with 15 points earns 25% of accepted contributions. With 100 planned and none accepted, completion is 0% and individual shares have no denominator. With positive accepted points a member who earned zero has a 0% share. Keep original values and accepted versions in exports, sum before rounding, and display **No accepted contributions yet** where appropriate.
+
+## Reminders, disputes and evidence questions
+
+At an unanswered checkpoint, privately remind the assignee first. Start the 24-hour window at the first private reminder. A submission, progress note or help request in that window suppresses escalation. Otherwise mark the task **Needs follow-up** after 24 hours. Refreshes and restarts preserve the time and avoid duplicate reminders. Show unresolved dependencies and the support requested. For submitted work, direct action to eligible reviewers.
+
+A member can file a dispute from a task, attaching the original agreement, dates, reminders and deliverables. Involved parties can respond and uninvolved members can review. Students can preview, select and export material for an instructor. Separate recorded facts, member statements and unresolved disagreements.
+
+Members can ask who completed the survey analysis, which criteria a selected report addresses, or why data collection was delayed. Link answers to the relevant version or event. Use the submission, agreed criteria and acceptance record for quality questions. If the sample method is missing, say what is missing. Keep group chat outside quality assessment. The program calculates contributions.
+
+## Local acceptance trial
+
+Use four fictional members and two branches. Track task coordination separately from a version’s review status. For example, a revision can be blocked on interview data while the earlier version remains rejected.
+
+| Scenario | Expected observation |
 | --- | --- |
-| 到检查点未交；首次提醒后第 23 小时刷新，第 24 小时再看 | 前者只对负责人提醒；仍无回应才在组内显示待跟进。若中途已求助且依赖未解决，则显示受阻和所需支持。 |
-| v1 已有反对票，还有一名成员未投 | 组内仍只看到待确认；最后一票收齐后才显示未通过。 |
-| 首轮未收齐，一名成员离组；作者说明原因、撤回后提交新版 | 旧版显示已撤回，仍可查阅成果和撤回原因。旧票不转入新版；新版须由本轮全部有资格者按作者确认及匿名投票规则重新验收。 |
-| v1 未通过，v2 全票通过；最后一票被重复发送 | 保留两个版本及各自结果，只按 v2 的任务分值和署名比例入账一次。 |
+| Check an unanswered reminder at 23 and 24 hours. | At 23 hours only the assignee sees it. At 24 hours the group sees follow-up if there was no response. An outstanding help request shows a blocker and the support needed. |
+| Someone disagrees on v1 while another member has yet to vote. | The round stays pending. Rejection appears only after all responses arrive. |
+| A member leaves during collection. An author gives a reason, withdraws and submits again. | The withdrawn version and reason remain accessible. The new round starts with fresh eligibility and no previous votes. |
+| v1 is rejected, v2 is accepted, and the final response is sent twice. | Both versions retain their outcomes. Only v2 contributes points, exactly once. |
 
-结项时，学生可以导出每人的具体成果、分值和占比，以及各分支从分工、提交、修订到验收的时间线。验收标准是：**任选报告中的一个百分比，都能沿着任务和成果版本复算出来；任选一次延期，都能看到当时记录的原因和处理经过。**
+The closing report should let students trace any percentage back to its task and version, and any extension back to the reason and decision recorded at the time.

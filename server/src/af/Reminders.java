@@ -109,7 +109,7 @@ final class Reminders {
                     ps.executeUpdate();
                 }
                 insertEvent(c, task, "reminder_private", "private",
-                        "检查点已到，负责人尚未提交成果、说明或求助。系统已私下提醒负责人。", "{}", now);
+                        "The checkpoint passed without a submission, update or request for help. A private reminder was sent to the assignee.", "{}", now);
                 return 1;
             }
             if (resolvedAt != null) return 0;
@@ -133,7 +133,7 @@ final class Reminders {
                     ps.executeUpdate();
                 }
                 insertEvent(c, task, "follow_up", "project",
-                        "检查点后满 24 小时仍无成果、说明或求助，组内标记为待跟进。", "{}", now);
+                        "After 24 hours without a submission, update or help request, the project can see the follow-up.", "{}", now);
                 changes++;
             }
             return changes;

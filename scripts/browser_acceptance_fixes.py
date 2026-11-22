@@ -42,20 +42,20 @@ def main():
         check("Ben Wu · 60%" in desktop.locator(".task-steps .author-list").inner_text()
               and "Cara Lin · 40%" in desktop.locator(".task-steps .author-list").inner_text(),
               "desktop handoff preserves both authors and shares")
-        desktop.locator(".action-panel summary", has_text="编辑新版署名和比例").click()
+        desktop.locator(".action-panel summary", has_text="Edit authors and shares for the next version").click()
         desktop.fill('#task-authors-form input[data-author-id="2"]', "55")
         desktop.fill('#task-authors-form input[data-author-id="3"]', "45")
         check("Ben Wu 60%" in desktop.locator("#task-authors-form .muted-note").inner_text()
               and "Ben Wu 55%" in desktop.locator("#task-authors-form .muted-note").inner_text(),
               "desktop author edit shows before and after")
         desktop.fill("#task-authors-form textarea[name=reason]", "Refined author agreement.")
-        desktop.get_by_role("button", name="保存新版署名").click()
+        desktop.get_by_role("button", name="Save authors").click()
         wait_text(desktop, ".task-steps .author-list", "Ben Wu · 55%")
         close_task(desktop)
         desktop.locator("#reports-list button", has_text=f"#{report_id}").click()
         desktop.wait_for_selector("#report-dialog[open]")
         member_report = desktop.locator("#report-dialog-content")
-        check("负责人 Ben Wu" in member_report.inner_text() and "Dan coordinates" in member_report.inner_text()
+        check("Assignee Ben Wu" in member_report.inner_text() and "Dan coordinates" in member_report.inner_text()
               and "Ben Wu 60%" in member_report.inner_text(), "report dialog shows original agreement and dated handoff")
         desktop.screenshot(path=str(OUT / "acceptance-report-desktop.png"))
         desktop.click('[data-close="report-dialog"]')
@@ -67,37 +67,37 @@ def main():
         input_file = mobile.locator("#task-submit-form input[type=file]")
         input_file.set_input_files({"name": "fieldwork.pdf", "mimeType": "application/pdf", "buffer": b"bad"})
         mobile.get_by_role("button", name="Submit new version").click()
-        wait_text(mobile, "#submission-error", "有效的 PDF")
+        wait_text(mobile, "#submission-error", "valid PDF")
         check(body.input_value() == "Keep this description after a failed upload", "mobile failed upload retains draft")
         input_file.set_input_files({"name": "fieldwork.pdf", "mimeType": "application/pdf", "buffer": pdf("Browser sample")})
         mobile.get_by_role("button", name="Submit new version").click()
         mobile.locator(".submission-card").wait_for()
         evidence = mobile.locator(".submission-card").first
-        check(evidence.get_by_role("link", name="打开 PDF · fieldwork.pdf").count() == 1,
+        check(evidence.get_by_role("link", name="Open PDF · fieldwork.pdf").count() == 1,
               "mobile submitted PDF has a version-specific open link")
-        link = evidence.get_by_role("link", name="打开 PDF · fieldwork.pdf")
+        link = evidence.get_by_role("link", name="Open PDF · fieldwork.pdf")
         check(desktop.request.get(BASE + link.get_attribute("href")).body() == pdf("Browser sample"),
               "second browser session receives the version PDF")
         mobile.locator(".action-panel summary", has_text="Submit a new version").click()
         mobile.fill("#task-submit-form textarea[name=artifactText]", "Revision: the field sample includes three sites.")
-        mobile.get_by_role("button", name="保存草稿").click()
-        check(evidence.locator(".status-pill").inner_text() == "待确认", "saving a mobile draft leaves v1 pending")
-        evidence.get_by_role("textbox", name="撤回原因").fill("现场数据需订正。")
-        evidence.get_by_role("button", name="撤回整轮验收").click()
-        wait_text(mobile, ".submission-card", "已撤回")
+        mobile.get_by_role("button", name="Save draft").click()
+        check(evidence.locator(".status-pill").inner_text() == "Pending review", "saving a mobile draft leaves v1 pending")
+        evidence.get_by_role("textbox", name="Withdrawal reason").fill("The field data needs correction.")
+        evidence.get_by_role("button", name="Withdraw review round").click()
+        wait_text(mobile, ".submission-card", "Withdrawn")
         mobile.screenshot(path=str(OUT / "acceptance-withdrawn-mobile.png"))
         mobile.locator(".action-panel summary", has_text="Submit a new version").click()
         check(mobile.locator("#task-submit-form textarea[name=artifactText]").input_value().startswith("Revision"),
               "withdrawal refresh restores the saved mobile draft")
         mobile.get_by_role("button", name="Submit new version").click()
         mobile.locator(".submission-card").nth(1).wait_for()
-        check(mobile.locator(".submission-card .status-pill").first.inner_text() == "待确认",
+        check(mobile.locator(".submission-card .status-pill").first.inner_text() == "Pending review",
               "resubmission creates a new pending round on mobile")
 
         old_version = mobile.locator(".submission-card").last
         old_id = old_version.get_attribute("id").removeprefix("submission-")
-        old_version.get_by_role("button", name="询问此版本").click()
-        mobile.fill("#ai-question", "这份报告达到哪些标准？")
+        old_version.get_by_role("button", name="Ask about this version").click()
+        mobile.fill("#ai-question", "Which criteria does this report meet?")
         mobile.locator("#ai-form button[type=submit]").click()
         wait_text(mobile, "#ai-answer", "v1")
         check(mobile.locator(f'#ai-answer a[href*="submission={old_id}"]').count() == 3,
@@ -110,8 +110,8 @@ def main():
         mobile.click("#assistant-close")
         mobile.locator("#assistant-panel").wait_for(state="hidden")
         mobile.click("#settings-button")
-        mobile.get_by_role("button", name="退出项目").click()
-        wait_text(mobile, "#toast", "已退出项目")
+        mobile.get_by_role("button", name="Leave project").click()
+        wait_text(mobile, "#toast", "You have left the project")
         check(not any(p["id"] == pid for p in ben.get("/api/projects")["projects"]),
               "ordinary member can leave from the mobile settings")
         check(alice.get(f"{tasks}/{tid}")["latestSubmission"]["status"] == "pending",
@@ -125,14 +125,14 @@ def main():
         desktop.fill("#create-task-form textarea[name=expectedOutput]", "A second field report")
         desktop.fill("#create-task-form textarea[name=acceptanceCriteria]", "Sample details listed.")
         desktop.click("#create-task-form button[type=submit]")
-        wait_text(desktop, "#task-create-error", "剩余 3 分，超出 4 分")
+        wait_text(desktop, "#task-create-error", "remaining 3 points, over by 4 points")
         desktop.screenshot(path=str(OUT / "acceptance-budget-desktop.png"))
-        for label in ("修订项目计划分", "修订General计划分"):
+        for label in ("Revise Project budget", "Revise General budget"):
             revision = desktop.locator("#task-budget details", has_text=label)
             revision.locator("summary").click()
-            revision.get_by_role("spinbutton", name="新计划分").fill("14")
-            revision.get_by_role("textbox", name="修订原因").fill("Allocate approved extra work.")
-            revision.get_by_role("button", name="保存计划修订").click()
+            revision.get_by_role("spinbutton", name="New planned points").fill("14")
+            revision.get_by_role("textbox", name="Reason for revision").fill("Allocate approved extra work.")
+            revision.get_by_role("button", name="Save plan revision").click()
             desktop.locator("#task-budget details[open]", has_text=label).wait_for(state="hidden")
         desktop.click("#create-task-form button[type=submit]")
         desktop.wait_for_selector("#task-dialog[open]")
@@ -177,7 +177,7 @@ def main():
         check(scroll > 0 and abs(mobile.locator("#chat-list").evaluate("node => node.scrollTop") - scroll) < 2,
               "new chat does not move the receiver's reading position")
         mobile.screenshot(path=str(OUT / "acceptance-chat-mobile.png"))
-        message.get_by_role("button", name="任务：Fieldwork evidence").click()
+        message.get_by_role("button", name="Task: Fieldwork evidence").click()
         wait_text(mobile, "#task-dialog-content h2", "Fieldwork evidence")
         close_task(mobile)
 

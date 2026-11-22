@@ -101,7 +101,7 @@ final class Tasks {
             }
             saveAuthors(c, taskId, authors);
             event(c, projectId, taskId, "created", user.id(), "project",
-                    "创建了任务「" + title + "」，约定 " + points + " 分，负责人 " + nameOf(c, assigneeId) + "。",
+                    "created the task ‘" + title + "’, agreed " + points + " points, Assignee " + nameOf(c, assigneeId) + ".",
                     new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
@@ -493,14 +493,14 @@ final class Tasks {
                 throw new ApiException(403, "Only the assignee or a co-author can submit this task");
             }
             if (count(c, "SELECT COUNT(*) FROM submissions WHERE task_id=? AND status='pending'", taskId) > 0) {
-                throw new ApiException(409, "本任务已有待确认版本，请本版署名作者先撤回整轮验收。");
+                throw new ApiException(409, "This task has a pending version. An author must withdraw the entire round first.");
             }
             for (JsonObject author : authors) {
                 if (!isMember(c, projectId, author.get("userId").getAsInt())) {
-                    throw new ApiException(409, "请先更新新版署名，包含的作者须仍在项目中。");
+                    throw new ApiException(409, "Update the authors for the new version first, all authors must still belong to the project.");
                 }
             }
-            if (authors.isEmpty()) throw new ApiException(409, "请先为新版安排署名作者。");
+            if (authors.isEmpty()) throw new ApiException(409, "Assign authors before submitting a new version.");
             Instant now = Clock.now();
             int version;
             try (PreparedStatement ps = c.prepareStatement(
@@ -513,7 +513,7 @@ final class Tasks {
             }
             byte[] pdf = submissionPdf(Util.str(body, "pdfBase64"), artifactName);
             if (pdf == null && !hasArtifactText(artifactText)) {
-                throw new ApiException(400, "请粘贴实际成果正文或上传有效 PDF。说明、文件名和链接仅作辅助。");
+                throw new ApiException(400, "Paste the deliverable text or upload a valid PDF. Notes, file names and links are supplementary.");
             }
             int submissionId;
             try (PreparedStatement ps = c.prepareStatement(
@@ -567,7 +567,7 @@ final class Tasks {
                 }
             }
             event(c, projectId, taskId, "submitted", user.id(), "project",
-                    "提交了版本 v" + version + "，验收标准与署名已冻结。",
+                    "submitted version v" + version + ", criteria and authors are frozen.",
                     "{\"submissionId\":" + submissionId + ",\"version\":" + version + "}");
             if (!allAuthors) finalizeIfComplete(c, submissionId, projectId);
             return detailInTransaction(c, user, projectId, taskId);
@@ -624,7 +624,7 @@ final class Tasks {
                 if (ps.executeUpdate() == 0) throw new ApiException(409, "You already confirmed this version");
             }
             event(c, projectId, taskId, "author_confirmed", user.id(), "project",
-                    user.name() + " 确认了版本 v" + state.version() + "。",
+                    user.name() + " confirmed version v" + state.version() + ".",
                     "{\"submissionId\":" + submissionId + ",\"version\":" + state.version() + "}");
             finalizeIfComplete(c, submissionId, projectId);
             return detailInTransaction(c, user, projectId, taskId);
@@ -672,7 +672,7 @@ final class Tasks {
             SubmissionState state = submissionState(c, submissionId, taskId);
             if (state == null) throw new ApiException(404, "Submission not found");
             if (!isFrozenAuthor(c, submissionId, user.id())) {
-                throw new ApiException(403, "只有仍在组内的本版署名作者可以撤回验收。");
+                throw new ApiException(403, "Only a current member who authored this version can withdraw it.");
             }
             try (PreparedStatement ps = c.prepareStatement(
                     "UPDATE submissions SET status='withdrawn',finalized_at=?,withdrawal_reason=? " +
@@ -680,10 +680,10 @@ final class Tasks {
                 ps.setString(1, Clock.nowIso());
                 ps.setString(2, reason);
                 ps.setInt(3, submissionId);
-                if (ps.executeUpdate() == 0) throw new ApiException(409, "本轮验收已经结束。");
+                if (ps.executeUpdate() == 0) throw new ApiException(409, "This review round is already closed.");
             }
             event(c, projectId, taskId, "withdrawn", user.id(), "project",
-                    "版本 v" + state.version() + " 已撤回。原因：" + reason,
+                    "Version v" + state.version() + " withdrawn. Reason: " + reason,
                     "{\"submissionId\":" + submissionId + "}");
             return detailInTransaction(c, user, projectId, taskId);
         });
@@ -724,21 +724,21 @@ final class Tasks {
         String withoutLinks = text.replaceAll("(?i)(?:https?://|www\\.)\\S+", "").strip();
         return !withoutLinks.isBlank()
                 && !withoutLinks.matches("(?is).{1,180}\\.(pdf|docx?|md|txt|xlsx?|png|jpe?g|zip)")
-                && !withoutLinks.matches("(?i)(已?完成了?|已?提交|做完了?|见附件|done|finished|completed|see attached)[。.!！\\s]*");
+                && !withoutLinks.matches("(?i)(done|finished|submitted|completed|see attach(?:ed|ment))[.!\\s]*");
     }
 
     private static byte[] submissionPdf(String encoded, String filename) {
         if (encoded == null || encoded.isEmpty()) return null;
-        if (encoded.length() > 1_400_000) throw new ApiException(413, "PDF 附件不能超过 1 MiB。");
+        if (encoded.length() > 1_400_000) throw new ApiException(413, "The PDF exceeds 1 MiB.");
         byte[] pdf;
         try {
             pdf = java.util.Base64.getDecoder().decode(encoded);
         } catch (IllegalArgumentException ex) {
-            throw new ApiException(400, "PDF 附件编码无效。");
+            throw new ApiException(400, "Invalid PDF encoding.");
         }
-        if (pdf.length > 1_048_576) throw new ApiException(413, "PDF 附件不能超过 1 MiB。");
+        if (pdf.length > 1_048_576) throw new ApiException(413, "The PDF exceeds 1 MiB.");
         if (!filename.toLowerCase(java.util.Locale.ROOT).endsWith(".pdf") || !validPdf(pdf)) {
-            throw new ApiException(400, "请选择有效的 PDF 文件。");
+            throw new ApiException(400, "Choose a valid PDF file.");
         }
         return pdf;
     }
@@ -848,11 +848,11 @@ final class Tasks {
                 ps.executeUpdate();
             }
             event(c, projectId, taskId, "accepted", null, "project",
-                    "版本 v" + state.version() + " 已收齐确认，全票同意，验收通过并计分一次。",
+                    "Version v" + state.version() + " has all required responses: unanimous agreement, accepted and scored once.",
                     "{\"submissionId\":" + submissionId + ",\"version\":" + state.version() + "}");
         } else {
             event(c, projectId, taskId, "rejected", null, "project",
-                    "版本 v" + state.version() + " 已收齐确认，未获全票同意，本版不计分。",
+                    "Version v" + state.version() + " has all required responses: agreement was not unanimous, no points awarded for this version.",
                     "{\"submissionId\":" + submissionId + ",\"version\":" + state.version() + "}");
         }
     }
@@ -906,7 +906,7 @@ final class Tasks {
                 ps.executeUpdate();
             }
             event(c, projectId, taskId, kind.equals("help") ? "help_requested" : "blocker_recorded", user.id(),
-                    "project", kind.equals("help") ? "请求组内帮助：" + text : "记录阻碍：" + text,
+                    "project", kind.equals("help") ? "requested team support: " + text : "recorded a blocker: " + text,
                     new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
@@ -937,7 +937,7 @@ final class Tasks {
                 ps.executeUpdate();
             }
             event(c, projectId, taskId, "support_resolved", user.id(), "project",
-                    "所需支持已处理，解除受阻状态。", new JsonObject().toString());
+                    "Support request resolved, task unblocked.", new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
     }
@@ -979,7 +979,7 @@ final class Tasks {
                 ps.executeUpdate();
             }
             event(c, projectId, taskId, "extension_requested", user.id(), "project",
-                    "申请延期至 " + newDeadline + "，原因：" + reason, new JsonObject().toString());
+                    "requested an extension until " + newDeadline + ", reason: " + reason, new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
     }
@@ -1028,8 +1028,8 @@ final class Tasks {
                 }
             }
             event(c, projectId, taskId, approve ? "extension_approved" : "extension_rejected", user.id(), "project",
-                    (approve ? "同意延期，原截止 " + oldDeadline + " 改为 " + newDeadline
-                            : "未同意延期，保留原截止 " + oldDeadline) + (decisionNote.isEmpty() ? "" : "；说明：" + decisionNote),
+                    (approve ? "Extension approved, original deadline " + oldDeadline + " changed to " + newDeadline
+                            : "Extension declined, original deadline retained " + oldDeadline) + (decisionNote.isEmpty() ? "" : "; Notes: " + decisionNote),
                     new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
@@ -1083,8 +1083,8 @@ final class Tasks {
                 ps.executeUpdate();
             }
             event(c, projectId, taskId, "reassigned", user.id(), "project",
-                    "重新分工：" + nameOf(c, task.assigneeId()) + " → " + nameOf(c, newAssignee) + "。原因：" + reason
-                            + "。原约定保留在历史记录中。", new JsonObject().toString());
+                    "Reassigned: " + nameOf(c, task.assigneeId()) + " → " + nameOf(c, newAssignee) + ". Reason: " + reason
+                            + ". The original agreement is retained in the history.", new JsonObject().toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
     }
@@ -1099,7 +1099,7 @@ final class Tasks {
             List<JsonObject> before = planAuthors(c, taskId);
             List<JsonObject> after = parseAuthors(body, c, projectId, -1);
             if (new HashSet<>(before).equals(new HashSet<>(after))) {
-                throw new ApiException(400, "署名和比例没有变化。");
+                throw new ApiException(400, "authors and shares are unchanged.");
             }
             try (PreparedStatement ps = c.prepareStatement("DELETE FROM task_authors WHERE task_id=?")) {
                 ps.setInt(1, taskId);
@@ -1111,7 +1111,7 @@ final class Tasks {
             change.add("after", Util.GSON.toJsonTree(after));
             change.addProperty("reason", reason);
             event(c, projectId, taskId, "authors_changed", user.id(), "project",
-                    "新版署名：" + describeShares(before) + " → " + describeShares(after) + "。原因：" + reason,
+                    "New authors: " + describeShares(before) + " → " + describeShares(after) + ". Reason: " + reason,
                     change.toString());
             return detailInTransaction(c, user, projectId, taskId);
         });
@@ -1122,7 +1122,7 @@ final class Tasks {
         for (JsonObject author : authors) {
             shares.add(author.get("name").getAsString() + " " + author.get("sharePct").getAsString() + "%");
         }
-        return String.join("、", shares);
+        return String.join(", ", shares);
     }
 
     static JsonObject detailInTransaction(Connection c, Auth.User user, int projectId, int taskId) throws SQLException {

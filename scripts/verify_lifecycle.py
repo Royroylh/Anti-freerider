@@ -123,7 +123,7 @@ def main():
             late, helped = [f"{project_url}/tasks/{task}" for task in ids]
             empty = api.board(alice, pid)["contribution"]
             api.check(empty["acceptedPoints"] == 0 and empty["completionPct"] == 0 and not empty["hasAccepted"]
-                      and "暂无已验收贡献" in alice.get(project_url + "/report/export?tasks=1"),
+                      and "No accepted contributions yet" in alice.get(project_url + "/report/export?tasks=1"),
                       "I-01 zero accepted points display 0% project completion and unavailable personal shares")
             set_time(AT_FIRST)
             api.check(eve.status_of("GET", project_url + "/board") == 403 and not reminder_rows(data, ids),

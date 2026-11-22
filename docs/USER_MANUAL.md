@@ -1,23 +1,23 @@
-# 用户手册
+# User guide
 
-## 五分钟试用
+## Try a project in five minutes
 
-按 [README](../README.md#本地试用) 启动，打开登录页。使用虚构的 Alice 登录，在独立浏览器会话以 Ben、Cara 或 Dan 登录。同一浏览器共用会话的标签页通常属于同一账号。
+Follow [Run locally](../README.md#run-locally). Sign in as Alice. Use a separate browser profile or private session for Ben, Cara or Dan. Ordinary tabs in the same profile usually share a session.
 
-1. 在左侧选择项目，或创建项目、从项目设置复制邀请码，再让同学用「Join with code」加入。公告栏每位成员一行，显示当前任务、检查点与所需支持。
-2. 选择分支并创建任务。填写负责人、截止时间、预期成果、逐条验收标准、计划分值和合计 100% 的署名份额。超过项目或分支余额时，可调低任务分；项目负责人也可在相同表单中修订计划，填写原因后再提交。
-3. 打开任务，展开「Submit a new version」。粘贴实际成果正文，或者选择一份 `.pdf` 附件，最多 **1 MiB**。说明、文件名、链接可以随正文填写。上传失败会保留当前填写；按「保存草稿」可在当前浏览器页签刷新后继续编辑正文，附件需重新选择。
-4. 用另一个项目成员会话打开该任务，在相应版次点「打开 PDF」。各版独立保存，后续使用同名文件也能打开旧件。离组后失去项目附件访问权限。
-5. 署名作者确认自己的版本。其他合资格成员分别投匿名同意或不同意。全员共同署名时，每位作者确认后也可单独投匿名票。两人组只有一名非作者时，结果可能让提交者推断其选择，网页会在投票前提示。
-6. 从结项区选择任务、时间线、举报和提醒后点「Preview」及「Download HTML」。点开个人分数查看计分任务和版本，HTML 附录保存原始计分数据。样例项目用 20 分 × 75% 算得 Alice 的 15 分，再除以全组已验收 60 分，得到 25%。
+1. Choose a project in the sidebar. To start your own, create one and share its invite code from project settings. Teammates can choose **Join with code**. The notice board shows each person’s tasks, checkpoints and outstanding support.
+2. Choose a branch and create a task. Enter the assignee, deadline, expected output, criteria, points and author shares totaling 100%. If the task exceeds the project or branch budget, reduce its points or ask the project owner to revise the budget with a reason in the same form.
+3. Open the task and expand **Submit a new version**. Paste the deliverable text or attach one PDF of up to 1 MiB. A note, link or file name can supplement the submission. A failed upload keeps the form contents. Choose **Save draft** to restore the text after refreshing the same tab. Select the attachment again before submitting.
+4. In a second member session, open the same task and choose **Open PDF** on the relevant version. Each version keeps its own file, even when the next submission uses the same file name. A member who leaves loses access to project attachments.
+5. Authors confirm the version individually. Other eligible members vote anonymously. If all members are authors, each must also cast an anonymous ballot. A two-person group sees an inference warning before its only non-author votes.
+6. Select tasks, timeline, disputes and reminders in the closing report area. Choose **Preview**, then **Download HTML**. Expand an individual score to inspect the contributing versions. The HTML includes the source values. In the example, 20 points × 75% gives Alice 15 points. Dividing by 60 accepted points gives 25%.
 
-## 验收、协作与争议
+## Review and collaboration
 
-- 收齐前版本显示「待确认」。任何一票不同意且全部回应收齐后显示「未通过」。修订后的新版本拥有自己的确认和投票。一次未通过不会自动创建举报。
-- 尚在组内的版本作者，若需要换稿，可以填写原因并点「撤回整轮验收」，然后提交新版。保存草稿和成员离组会保留正在收集的轮次。撤回版仍可查阅。
-- 用任务的求助表单补充阻碍和所需支持，公告栏会显示「受阻」。检查点没有进展时先私下提醒负责人。24 小时无回应后，其他组员可见「待跟进」。工作说明或求助可让提醒提前结束。
-- 群聊可关联任务，组员在可见页面会自动收到消息。成员可提出延期并说明原因，由项目负责人批准或拒绝。交接负责人保留作者份额，需要改变未来署名时使用独立的署名编辑。
-- 从任务手动发起举报。原当事人可补充陈述，未涉事成员可复核。按需预览后下载导出，自行交给老师。
-- 在「询问此版本」进入证据问答，或在问题中使用明确成果名称。引用可打开相应任务和版本。问答显示当前模式；本次验收使用本机检索回退，逐条比对使用已提交正文，PDF 原文通过版次附件查看。
+- A version stays **Pending review** until all required responses arrive. A disagreement then produces **Rejected**. A new version collects fresh responses. Rejection does not automatically open a dispute.
+- To replace a pending version, one of its authors who is still a member can enter a reason and choose **Withdraw review round**. The old version remains available. Saving a draft or leaving the project does not close the round.
+- Record a blocker and describe the help needed. An unresolved request shows **Blocked**. At an unanswered checkpoint the assignee receives a private reminder. After 24 hours without a response the team sees **Needs follow-up**. Recording progress or requesting help can stop escalation.
+- Link chat messages to tasks. Visible sessions receive updates automatically. Request a deadline extension with a reason for the project owner to approve or decline. Handing off coordination retains the author shares. Use the separate authorship form to change future versions.
+- File a dispute from a specific task. Original parties may add statements and uninvolved members may review. Preview and download the selected material to share with your instructor.
+- Choose **Ask about this version** or name a specific deliverable. Open the answer’s citation to inspect the version. The assistant displays its mode. Evidence retrieval compares the saved submission text with its criteria. Open the PDF to read the original attachment.
 
-本次浏览器验收涵盖 1440 px 桌面和 390 px 手机视口，包括登录、打开版次、上传、撤回、离组和收消息。测试环境见[测试覆盖报告](TEST_COVERAGE.md)。
+The [test report](TEST_COVERAGE.md) describes the desktop and mobile Chrome viewports used to check sign-in, opening versions, uploads, withdrawal, leaving a project and receiving messages.

@@ -49,25 +49,25 @@ final class Seed {
                 member(c, main, dan, "member");
                 int design = branch(c, main, "Questionnaire design", 50, 0);
                 int data = branch(c, main, "Data collection & analysis", 90, 1);
-                int t1 = task(c, main, design, "Questionnaire design & pilot / 问卷设计与预测试", alice,
+                int t1 = task(c, main, design, "Questionnaire design & pilot / Survey design and pilot", alice,
                         "Draft the questionnaire, run a small pilot, and record the changes made after the pilot.",
                         30, t0.plus(Duration.ofHours(2)), t0.plus(Duration.ofDays(2)),
                         "Pilot questionnaire (v1) plus a short note on revisions.",
                         "All five sections are present.\nPilot includes at least three respondents.\nDocumentation explains what changed after the pilot.",
                         alice, ben, 60, 40);
-                int t2 = task(c, main, data, "Interview data collection / 数据收集", cara,
+                int t2 = task(c, main, data, "Interview data collection / Data collection", cara,
                         "Collect two interview groups and prepare the transcript pack.",
                         30, t0.plus(Duration.ofDays(1)), t0.plus(Duration.ofDays(3)),
                         "Two anonymised interview transcripts and a collection log.",
                         "Two groups are represented.\nConsent and anonymisation are documented.\nA collection log explains any deviation.",
                         cara, null, 100, 0);
-                int t3 = task(c, main, data, "Questionnaire analysis report / 问卷分析报告", ben,
+                int t3 = task(c, main, data, "Questionnaire analysis report / Survey analysis report", ben,
                         "Analyse the pilot data and write the report used in the final submission.",
                         40, t0.plus(Duration.ofDays(2)), t0.plus(Duration.ofDays(4)),
                         "Analysis report with tables, limitations, and a methods note.",
                         "Report states the sample and method.\nEvery table is traceable to the dataset.\nLimitations are discussed.",
                         ben, dan, 70, 30);
-                int t4 = task(c, main, data, "Integrated final report / 结项整合报告", alice,
+                int t4 = task(c, main, data, "Integrated final report / Final integration report", alice,
                         "All four members jointly edit and sign the integrated course submission.",
                         20, t0.plus(Duration.ofDays(3)), t0.plus(Duration.ofDays(5)),
                         "Integrated report with a contribution appendix.",
@@ -87,19 +87,19 @@ final class Seed {
                 member(c, math, dan, "member");
                 int delivered = branch(c, math, "Delivered work", 60, 0);
                 int remaining = branch(c, math, "Not yet delivered", 40, 1);
-                int m1 = task(c, math, delivered, "Widget specification / 规格说明", alice,
+                int m1 = task(c, math, delivered, "Widget specification / Specification", alice,
                         "Write the 20-point specification used in the contribution arithmetic check.",
                         20, t0.minus(Duration.ofDays(2)), t0.plus(Duration.ofDays(2)),
                         "Specification document.",
                         "Includes scope.\nIncludes acceptance examples.",
                         alice, ben, 75, 25);
-                int m2 = task(c, math, delivered, "Dataset validation / 数据校验", cara,
+                int m2 = task(c, math, delivered, "Dataset validation / Data validation", cara,
                         "Validate the dataset independently; this 40-point task is completed by Cara alone.",
                         40, t0.minus(Duration.ofDays(1)), t0.plus(Duration.ofDays(2)),
                         "Validation log.",
                         "Checks row counts and missing values.\nRecords the validation date.",
                         cara, null, 100, 0);
-                task(c, math, remaining, "Remaining deliverable / 未完成交付", dan,
+                task(c, math, remaining, "Remaining deliverable / Unfinished deliverable", dan,
                         "Deliberately not accepted yet, so 40 points stay outside the completion percentage.",
                         40, t0.plus(Duration.ofDays(3)), t0.plus(Duration.ofDays(6)),
                         "Not submitted yet.",

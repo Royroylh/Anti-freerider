@@ -25,7 +25,7 @@ final class Projects {
         }
 
         String shortfall(String label, int points) {
-            return points <= remaining() ? "" : label + "剩余 " + remaining() + " 分，超出 " + (points - remaining()) + " 分";
+            return points <= remaining() ? "" : label + " remaining " + remaining() + " points, over by " + (points - remaining()) + (points - remaining() == 1 ? " point" : " points");
         }
     }
 
@@ -46,11 +46,11 @@ final class Projects {
     }
 
     static void requireAvailablePoints(Connection c, int projectId, int branchId, int points) throws SQLException {
-        String project = budget(c, projectId, null).shortfall("项目", points);
-        String branch = budget(c, projectId, branchId).shortfall("分支", points);
+        String project = budget(c, projectId, null).shortfall("Project", points);
+        String branch = budget(c, projectId, branchId).shortfall("Branch", points);
         if (!project.isEmpty() || !branch.isEmpty()) {
-            String gap = String.join("；", java.util.stream.Stream.of(project, branch).filter(s -> !s.isEmpty()).toList());
-            throw new ApiException(409, gap + "。请降低任务分，或先修订计划分。");
+            String gap = String.join("; ", java.util.stream.Stream.of(project, branch).filter(s -> !s.isEmpty()).toList());
+            throw new ApiException(409, gap + ". Reduce the task points, or revise the budget first.");
         }
     }
 
@@ -61,9 +61,9 @@ final class Projects {
         return Db.write(c -> {
             Auth.requireOwner(c, projectId, user.id());
             Budget old = budget(c, projectId, branchId);
-            if (old.planned() == planned) throw new ApiException(400, "计划分没有变化。");
+            if (old.planned() == planned) throw new ApiException(400, "The planned total has not changed.");
             if (planned < old.assigned()) {
-                throw new ApiException(400, "新计划至少须覆盖已分配的 " + old.assigned() + " 分。");
+                throw new ApiException(400, "The new budget must cover the allocated total of " + old.assigned() + " points.");
             }
             try (PreparedStatement ps = c.prepareStatement(
                     branchId == null ? "UPDATE projects SET planned_points=? WHERE id=?"
@@ -118,7 +118,7 @@ final class Projects {
     static JsonObject leave(Auth.User user, int projectId) throws Exception {
         return Db.write(c -> {
             Auth.requireMember(c, projectId, user.id());
-            if (Auth.isOwner(c, projectId, user.id())) throw new ApiException(403, "项目负责人不能直接退出项目。");
+            if (Auth.isOwner(c, projectId, user.id())) throw new ApiException(403, "The project owner cannot leave directly.");
             try (PreparedStatement ps = c.prepareStatement("DELETE FROM project_members WHERE project_id=? AND user_id=?")) {
                 ps.setInt(1, projectId);
                 ps.setInt(2, user.id());

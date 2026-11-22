@@ -79,8 +79,8 @@
             <p>Create a group, or join one with the invite code a teammate shared. The workspace opens
               directly once you are a member.</p>
             <div class="button-row">
-              <button class="primary-small" type="button" id="empty-create">创建小组 / Create group</button>
-              <button class="outline-button" type="button" id="empty-join">用邀请码加入 / Join with code</button>
+              <button class="primary-small" type="button" id="empty-create">Create group</button>
+              <button class="outline-button" type="button" id="empty-join">Join with code</button>
             </div>
             <p class="muted-note">The image slot is reserved for a user-selected photo. No image is
               loaded until material is provided.</p>
@@ -110,7 +110,7 @@
           <div class="brief-item">
             <span class="stat-label">Your accepted points</span>
             <strong id="stat-my-points">—</strong>
-            <small id="stat-my-share">暂无已验收贡献</small>
+            <small id="stat-my-share">No accepted contributions yet</small>
           </div>
           <div class="brief-item">
             <span class="stat-label">Anonymous acceptance</span>
@@ -262,15 +262,15 @@
         <form class="stack-form compact" id="ai-form">
           <label>Question about this project
             <input id="ai-question" name="question" type="text" maxlength="1000"
-                   placeholder="例如：谁完成了问卷分析？" required>
+                   placeholder="For example: Who completed the survey analysis?" required>
           </label>
           <button type="submit">Ask assistant</button>
         </form>
         <div class="example-questions">
-          <button type="button" data-question="谁完成了问卷分析">Who completed the analysis?</button>
-          <button type="button" data-question="这份报告达到了哪些标准">Which criteria did the report meet?</button>
-          <button type="button" data-question="数据收集为什么延期">Why was data collection delayed?</button>
-          <button type="button" data-question="当前贡献比例是多少">Contribution percentages?</button>
+          <button type="button" data-question="Who completed the survey analysis">Who completed the analysis?</button>
+          <button type="button" data-question="Which criteria does this report meet">Which criteria did the report meet?</button>
+          <button type="button" data-question="Why was data collection delayed">Why was data collection delayed?</button>
+          <button type="button" data-question="What are the current contribution shares">Contribution percentages?</button>
         </div>
         <div class="ai-answer" id="ai-answer" hidden></div>
         <p class="panel-note">Answers are evidence retrieval over this project's tasks, versions, criteria,

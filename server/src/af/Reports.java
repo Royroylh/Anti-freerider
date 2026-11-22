@@ -102,7 +102,7 @@ final class Reports {
             plan.addProperty("reporter", user.name());
             savePlan(c, reportId, plan);
             Tasks.event(c, projectId, taskId, "report_created", user.id(), "project",
-                    "从该任务发起举报，等待成员陈述与复核。", "{\"reportId\":" + reportId + "}");
+                    "opened a dispute about this task, awaiting statements and review.", "{\"reportId\":" + reportId + "}");
             return reportDetail(c, projectId, reportId, user.id());
         });
     }
@@ -119,7 +119,7 @@ final class Reports {
             if (report.status().equals("closed")) throw new ApiException(409, "This report is closed");
             statement(c, reportId, user.id(), "response", text);
             Tasks.event(c, projectId, report.taskId(), "report_response", user.id(), "project",
-                    "对举报补充了成员陈述。", "{\"reportId\":" + reportId + "}");
+                    "added a statement to the dispute.", "{\"reportId\":" + reportId + "}");
             return reportDetail(c, projectId, reportId, user.id());
         });
     }
@@ -132,12 +132,12 @@ final class Reports {
             Involved involved = involved(c, report);
             if (!involved.complete() || involved.userIds().contains(user.id())) {
                 throw new ApiException(403, involved.complete() ? "Only members not involved in the report can review it"
-                        : "历史当事人资料缺失，暂无法确认复核资格。");
+                        : "Historical party information is missing, review eligibility cannot be verified.");
             }
             if (report.status().equals("closed")) throw new ApiException(409, "This report is closed");
             statement(c, reportId, user.id(), "review", text);
             Tasks.event(c, projectId, report.taskId(), "report_review", user.id(), "project",
-                    "以未涉事成员身份提交了复核意见。", "{\"reportId\":" + reportId + "}");
+                    "submitted an independent review.", "{\"reportId\":" + reportId + "}");
             return reportDetail(c, projectId, reportId, user.id());
         });
     }
@@ -331,7 +331,7 @@ final class Reports {
         plan.addProperty("reporterId", report.reporterId());
         plan.addProperty("reporter", Tasks.nameOf(c, report.reporterId()));
         plan.addProperty("historyNote", !plan.get("partiesComplete").getAsBoolean() || deadline == null
-                ? "部分举报当时的资料缺失，按现存历史记录显示。" : "依据当时的分工及日期记录还原。");
+                ? "Some information from the time of filing is missing, available history is shown." : "Reconstructed from the agreement and date records.");
         return plan;
     }
 
@@ -800,11 +800,11 @@ final class Reports {
         o.add("statements", statements);
         JsonArray unresolved = new JsonArray();
         if ("open".equals(report.status())) {
-            unresolved.add("举报尚未结案：" + report.reason());
+            unresolved.add("The dispute remains open: " + report.reason());
             for (var e : statements) {
                 JsonObject s = e.getAsJsonObject();
                 if ("review".equals(s.get("kind").getAsString())) {
-                    unresolved.add("未涉事成员复核意见：" + s.get("body").getAsString());
+                    unresolved.add("Independent reviews: " + s.get("body").getAsString());
                 }
             }
         }
@@ -819,9 +819,9 @@ final class Reports {
         String projectName = data.getAsJsonObject("project").get("name").getAsString();
         String generated = data.get("generatedAt").getAsString();
         StringBuilder h = new StringBuilder();
-        h.append("<!doctype html><html lang=\"zh-CN\"><head><meta charset=\"utf-8\">")
+        h.append("<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">")
                 .append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">")
-                .append("<title>").append(Util.escapeHtml(projectName)).append(" — 结项报告</title>")
+                .append("<title>").append(Util.escapeHtml(projectName)).append(" — Closing report</title>")
                 .append("<style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:1000px;")
                 .append("margin:0 auto;padding:32px;color:#17212f;line-height:1.6}h1,h2,h3{line-height:1.25}")
                 .append("h2{border-bottom:2px solid #0f766e;padding-bottom:6px;margin-top:36px}")
@@ -832,22 +832,22 @@ final class Reports {
                 .append(".unresolved{background:#fef2f2;padding:12px;border-left:4px solid #dc2626}")
                 .append("code{background:#f1f5f9;padding:2px 4px;border-radius:4px}@media print{body{padding:0}}")
                 .append("</style></head><body>");
-        h.append("<h1>").append(Util.escapeHtml(projectName)).append("：结项报告</h1>");
-        h.append("<p class=\"muted\">生成时间 ").append(Util.escapeHtml(generated))
-                .append(" · 由项目成员在选择材料后自行导出，可直接交给老师。</p>");
+        h.append("<h1>").append(Util.escapeHtml(projectName)).append(": Closing report</h1>");
+        h.append("<p class=\"muted\">Generated ").append(Util.escapeHtml(generated))
+                .append(" · Exported by a project member after selecting the material, ready to share with the instructor.</p>");
 
         JsonObject contribution = data.getAsJsonObject("contribution");
-        h.append("<h2>一、贡献汇总（由程序复算）</h2>");
-        h.append("<p>项目完成度：<strong>").append(contribution.get("acceptedPoints").getAsInt())
+        h.append("<h2>1. Contribution summary (calculated from records)</h2>");
+        h.append("<p>Project completion: <strong>").append(contribution.get("acceptedPoints").getAsInt())
                 .append(" / ").append(contribution.get("plannedPoints").getAsInt()).append(" = ")
                 .append(fmt(contribution.get("completionPct").getAsDouble()))
-                .append("%</strong>（已验收任务分 / 项目计划总分）。</p>");
+                .append("%</strong> (Accepted task points / Planned project points).</p>");
         appendBudget(h, contribution);
         if (!contribution.get("hasAccepted").getAsBoolean()) {
-            h.append("<p class=\"muted\">暂无已验收贡献。</p>");
+            h.append("<p class=\"muted\">No accepted contributions yet.</p>");
         }
-        h.append("<h3>个人成果明细（点开个人分值查看版本）</h3>");
-        h.append("<table><thead><tr><th>成员</th><th>已验收分值 / 全组已验收 / 占比（点开看版本）</th></tr></thead><tbody>");
+        h.append("<h3>Individual contributions (Select a member’s points to see the versions)</h3>");
+        h.append("<table><thead><tr><th>Member</th><th>Accepted points / Team accepted total / share (expand for versions)</th></tr></thead><tbody>");
         int acceptedPoints = contribution.get("acceptedPoints").getAsInt();
         java.util.Map<Integer, JsonArray> achievementsByMember = new java.util.LinkedHashMap<>();
         for (var ae : data.getAsJsonArray("memberAchievements")) {
@@ -860,31 +860,31 @@ final class Reports {
             double share = m.get("sharePct").getAsDouble();
             h.append("<tr><td>").append(Util.escapeHtml(m.get("name").getAsString())).append("</td><td>");
             if (!contribution.get("hasAccepted").getAsBoolean()) {
-                h.append("暂无已验收贡献");
+                h.append("No accepted contributions yet");
             } else {
                 h.append("<details><summary><strong>").append(fmt(points)).append(" / ").append(acceptedPoints)
                         .append(" = ").append(fmt(share)).append("%</strong></summary><ul>");
                 JsonArray items = achievementsByMember.getOrDefault(m.get("id").getAsInt(), new JsonArray());
                 if (items.isEmpty()) {
-                    h.append("<li>暂无已验收成果</li>");
+                    h.append("<li>No accepted work yet</li>");
                 }
                 for (var itemElement : items) {
                     JsonObject item = itemElement.getAsJsonObject();
                     h.append("<li>").append(Util.escapeHtml(item.get("title").getAsString()))
-                            .append("（v").append(item.get("version").getAsInt()).append("：")
-                            .append(item.get("taskPoints").getAsInt()).append(" 分 × ")
+                            .append(" (v").append(item.get("version").getAsInt()).append(": ")
+                            .append(item.get("taskPoints").getAsInt()).append(" points × ")
                             .append(fmt(item.get("sharePct").getAsDouble())).append("% = ")
-                            .append(fmt(item.get("memberPoints").getAsDouble())).append(" 分）</li>");
+                            .append(fmt(item.get("memberPoints").getAsDouble())).append(" points)</li>");
                 }
                 h.append("</ul></details>");
             }
             h.append("</td></tr>");
         }
         h.append("</tbody></table>");
-        h.append("<p class=\"muted\">公式：项目完成度 = 已验收任务分值 ÷ 项目计划总分；分支完成度 = 分支已验收分值 ÷ 分支计划分；")
-                .append("个人分值 = 每项已验收任务分值 × 冻结的署名比例；个人占比 = 个人已验收分值 ÷ 全组已验收分值。</p>");
+        h.append("<p class=\"muted\">Formula: Project completion = Accepted task points ÷ Planned project points; Branch completion = Accepted branch points ÷ Planned branch points; ")
+                .append("Individual points = accepted task points × frozen author share; Individual share = individual accepted points ÷ total accepted points.</p>");
 
-        h.append("<h2>二、分支完成度</h2><table><thead><tr><th>分支</th><th>计划分</th><th>已验收</th><th>完成度（已验收 / 计划）</th></tr></thead><tbody>");
+        h.append("<h2>2. Branch completion</h2><table><thead><tr><th>Branch</th><th>Planned points</th><th>Accepted</th><th>Completion (Accepted / Plan)</th></tr></thead><tbody>");
         for (var e : contribution.getAsJsonArray("branches")) {
             JsonObject b = e.getAsJsonObject();
             h.append("<tr><td>").append(Util.escapeHtml(b.get("name").getAsString())).append("</td><td>")
@@ -892,39 +892,39 @@ final class Reports {
                     .append("</td><td>").append(b.get("hasAccepted").getAsBoolean()
                             ? b.get("acceptedPoints").getAsInt() + " / " + b.get("plannedPoints").getAsInt()
                                 + " = " + fmt(b.get("completionPct").getAsDouble()) + "%"
-                            : b.get("plannedPoints").getAsInt() == 0 ? "计划分待设置"
-                            : "0 / " + b.get("plannedPoints").getAsInt() + " = 0% · 暂无已验收贡献");
+                            : b.get("plannedPoints").getAsInt() == 0 ? "Budget pending"
+                            : "0 / " + b.get("plannedPoints").getAsInt() + " = 0% · No accepted contributions yet");
             appendBudget(h, b);
             h.append("</td></tr>");
         }
         h.append("</tbody></table>");
 
         if (includeTasks) {
-            h.append("<h2>三、已记录的事实：任务、成果版本与验收</h2>");
+            h.append("<h2>3. Recorded facts: Task, Deliverables and acceptance</h2>");
             for (var e : data.getAsJsonArray("tasks")) {
                 JsonObject t = e.getAsJsonObject();
                 h.append("<h3>").append(Util.escapeHtml(t.get("title").getAsString())).append("</h3>");
-                h.append("<p class=\"muted\">分支 ").append(Util.escapeHtml(t.get("branchName").getAsString()))
-                        .append(" · 负责人 ").append(Util.escapeHtml(t.get("assignee").getAsString()))
-                        .append(" · ").append(t.get("points").getAsInt()).append(" 分 · 截止 ")
+                h.append("<p class=\"muted\">Branch ").append(Util.escapeHtml(t.get("branchName").getAsString()))
+                        .append(" · Assignee ").append(Util.escapeHtml(t.get("assignee").getAsString()))
+                        .append(" · ").append(t.get("points").getAsInt()).append(" points · Deadline ")
                         .append(Util.escapeHtml(t.get("deadlineAt").getAsString())).append("</p>");
-                h.append("<div class=\"fact\"><strong>原定验收标准：</strong>")
+                h.append("<div class=\"fact\"><strong>Original acceptance criteria: </strong>")
                         .append(Util.escapeHtml(t.get("acceptanceCriteria").getAsString()).replace("\n", "<br>"))
                         .append("</div>");
                 if (t.get("score").isJsonObject()) {
                     JsonObject s = t.getAsJsonObject("score");
-                    h.append("<p><strong>验收：</strong>版本 v").append(s.get("version").getAsInt())
-                            .append(" 全票通过，计 ").append(s.get("points").getAsInt()).append(" 分（")
-                            .append(Util.escapeHtml(s.get("acceptedAt").getAsString())).append("）。</p>");
+                    h.append("<p><strong>Review: </strong>Version v").append(s.get("version").getAsInt())
+                            .append(" Unanimously accepted, awards ").append(s.get("points").getAsInt()).append(" points (")
+                            .append(Util.escapeHtml(s.get("acceptedAt").getAsString())).append(").</p>");
                 } else {
-                    h.append("<p><strong>验收：</strong>尚无已通过版本，不计分。</p>");
+                    h.append("<p><strong>Review: </strong>No accepted version yet, no points awarded.</p>");
                 }
-                h.append("<table><thead><tr><th>版本</th><th>状态</th><th>署名与比例</th><th>提交时间</th><th>最终处理</th></tr></thead><tbody>");
+                h.append("<table><thead><tr><th>Version</th><th>Status</th><th>Authors and shares</th><th>Submitted</th><th>Final decision</th></tr></thead><tbody>");
                 for (var ve : t.getAsJsonArray("versions")) {
                     JsonObject v = ve.getAsJsonObject();
                     StringBuilder names = new StringBuilder();
                     for (var ae : v.getAsJsonArray("authors")) {
-                        if (names.length() > 0) names.append("；");
+                        if (names.length() > 0) names.append("; ");
                         names.append(ae.getAsJsonObject().get("name").getAsString()).append(" ")
                                 .append(fmt(ae.getAsJsonObject().get("sharePct").getAsDouble())).append("%");
                     }
@@ -933,56 +933,56 @@ final class Reports {
                             .append(Util.escapeHtml(names.toString())).append("</td><td>")
                             .append(Util.escapeHtml(v.get("createdAt").getAsString())).append("</td><td>")
                             .append(v.get("finalizedAt").isJsonNull() ? "—" : Util.escapeHtml(v.get("finalizedAt").getAsString()))
-                            .append(v.get("withdrawalReason").isJsonNull() ? "" : " · 原因：" + escaped(v, "withdrawalReason"))
+                            .append(v.get("withdrawalReason").isJsonNull() ? "" : " · reason: " + escaped(v, "withdrawalReason"))
                             .append("</td></tr>");
                     appendExportArtifact(h, v, projectId, userId);
                 }
                 h.append("</tbody></table>");
                 for (var de : t.getAsJsonArray("dateChanges")) {
                     JsonObject d = de.getAsJsonObject();
-                    h.append("<div class=\"fact\"><strong>延期记录：</strong>原截止 ")
-                            .append(Util.escapeHtml(d.get("oldDeadline").getAsString())).append(" → 新截止 ")
-                            .append(Util.escapeHtml(d.get("newDeadline").getAsString())).append("；原因：")
-                            .append(Util.escapeHtml(d.get("reason").getAsString())).append("；结果：")
-                            .append(statusLabel(d.get("status").getAsString())).append("（")
-                            .append(Util.escapeHtml(d.get("requester").getAsString())).append(" 提出，")
-                            .append(d.get("decider").isJsonNull() ? "未处理" : Util.escapeHtml(d.get("decider").getAsString()) + " 处理")
-                            .append("）。</div>");
+                    h.append("<div class=\"fact\"><strong>Deadline change: </strong>original deadline ")
+                            .append(Util.escapeHtml(d.get("oldDeadline").getAsString())).append(" → New deadline ")
+                            .append(Util.escapeHtml(d.get("newDeadline").getAsString())).append("; reason: ")
+                            .append(Util.escapeHtml(d.get("reason").getAsString())).append("; outcome: ")
+                            .append(statusLabel(d.get("status").getAsString())).append(" (")
+                            .append(Util.escapeHtml(d.get("requester").getAsString())).append(" requested, ")
+                            .append(d.get("decider").isJsonNull() ? "Pending" : Util.escapeHtml(d.get("decider").getAsString()) + " decided")
+                            .append(").</div>");
                 }
                 for (var re : t.getAsJsonArray("reassignments")) {
                     JsonObject r = re.getAsJsonObject();
                     StringBuilder original = new StringBuilder();
                     for (var pe : r.getAsJsonArray("originalPlanAuthors")) {
                         JsonObject p = pe.getAsJsonObject();
-                        if (original.length() > 0) original.append("；");
+                        if (original.length() > 0) original.append("; ");
                         original.append(p.get("name").getAsString()).append(" ").append(fmt(p.get("sharePct").getAsDouble())).append("%");
                     }
-                    h.append("<div class=\"fact\"><strong>重新分工记录：</strong>")
+                    h.append("<div class=\"fact\"><strong>Handoff history: </strong>")
                             .append(Util.escapeHtml(r.get("fromName").getAsString())).append(" → ")
-                            .append(Util.escapeHtml(r.get("toName").getAsString())).append("；原因：")
-                            .append(Util.escapeHtml(r.get("reason").getAsString())).append("；日期：")
-                            .append(Util.escapeHtml(r.get("createdAt").getAsString())).append("；原约定：")
-                            .append(Util.escapeHtml(original.toString())).append("。</div>");
+                            .append(Util.escapeHtml(r.get("toName").getAsString())).append("; reason: ")
+                            .append(Util.escapeHtml(r.get("reason").getAsString())).append("; Date: ")
+                            .append(Util.escapeHtml(r.get("createdAt").getAsString())).append("; Original agreement: ")
+                            .append(Util.escapeHtml(original.toString())).append(".</div>");
                 }
             }
         }
 
         if (includeTimeline) {
-            h.append("<h2>四、分支时间线</h2>");
+            h.append("<h2>4. Branch timeline</h2>");
             for (var changeElement : data.getAsJsonArray("planChanges")) {
                 JsonObject change = changeElement.getAsJsonObject();
                 h.append("<p>").append(escaped(change, "createdAt")).append(" · ")
-                        .append(change.get("branchName").isJsonNull() ? "项目" : escaped(change, "branchName"))
-                        .append("计划分 ").append(change.get("oldPoints").getAsInt()).append(" → ")
+                        .append(change.get("branchName").isJsonNull() ? "Project" : escaped(change, "branchName"))
+                        .append(" planned points ").append(change.get("oldPoints").getAsInt()).append(" → ")
                         .append(change.get("newPoints").getAsInt()).append(" · ").append(escaped(change, "reason")).append("</p>");
             }
             for (var be : data.getAsJsonArray("branchTimelines")) {
                 JsonObject b = be.getAsJsonObject();
                 h.append("<h3>").append(Util.escapeHtml(b.get("name").getAsString())).append("</h3>");
-                h.append("<p class=\"muted\">计划 ").append(b.get("plannedPoints").getAsInt()).append(" 分 · 已验收 ")
-                        .append(b.get("acceptedPoints").getAsInt()).append(" 分 · 完成度 ");
+                h.append("<p class=\"muted\">Plan ").append(b.get("plannedPoints").getAsInt()).append(" points · Accepted ")
+                        .append(b.get("acceptedPoints").getAsInt()).append(" points · Completion ");
                 if (b.get("acceptedPoints").getAsInt() == 0) {
-                    h.append("暂无已验收贡献");
+                    h.append("No accepted contributions yet");
                 } else {
                     h.append(b.get("acceptedPoints").getAsInt()).append(" / ")
                             .append(b.get("plannedPoints").getAsInt()).append(" = ")
@@ -992,60 +992,60 @@ final class Reports {
                 for (var ee : b.getAsJsonArray("entries")) {
                     JsonObject e = ee.getAsJsonObject();
                     h.append("<p><strong>").append(Util.escapeHtml(e.get("at").getAsString())).append("</strong> · ")
-                            .append(Util.escapeHtml(e.get("taskTitle").getAsString())).append("：")
+                            .append(Util.escapeHtml(e.get("taskTitle").getAsString())).append(": ")
                             .append(Util.escapeHtml(e.get("body").getAsString())).append("</p>");
                 }
             }
         }
 
         if (includeReminders) {
-            h.append("<h2>五、检查点提醒（仅组内可见的升级记录）</h2>");
+            h.append("<h2>5. Checkpoint reminders (follow-ups visible to project members)</h2>");
             if (data.getAsJsonArray("reminders").isEmpty()) {
-                h.append("<p class=\"muted\">没有已升级到组内的提醒。</p>");
+                h.append("<p class=\"muted\">No reminders have been escalated to the project.</p>");
             }
             for (var re : data.getAsJsonArray("reminders")) {
                 JsonObject r = re.getAsJsonObject();
-                h.append("<p><strong>").append(Util.escapeHtml(r.get("taskTitle").getAsString())).append("</strong>：检查点 ")
-                        .append(Util.escapeHtml(r.get("checkpointAt").getAsString())).append("，私下提醒 ")
-                        .append(Util.escapeHtml(r.get("firstPrivateReminderAt").getAsString())).append("，满 24 小时升级 ")
+                h.append("<p><strong>").append(Util.escapeHtml(r.get("taskTitle").getAsString())).append("</strong>: Checkpoint ")
+                        .append(Util.escapeHtml(r.get("checkpointAt").getAsString())).append(", Private reminder ")
+                        .append(Util.escapeHtml(r.get("firstPrivateReminderAt").getAsString())).append(", after 24 hours ")
                         .append(Util.escapeHtml(r.get("groupFollowUpAt").getAsString()))
-                        .append(r.get("followUpResolvedAt").isJsonNull() ? "；仍未回应。" : "；已回应。").append("</p>");
+                        .append(r.get("followUpResolvedAt").isJsonNull() ? "; No response yet." : "; Responded.").append("</p>");
             }
         }
 
         if (includeDisputes) {
-            h.append("<h2>六、举报材料：事实、陈述与待解决分歧</h2>");
+            h.append("<h2>6. Dispute records: Facts, statements and unresolved disputes</h2>");
             if (data.getAsJsonArray("disputes").isEmpty()) {
-                h.append("<p class=\"muted\">没有举报材料。</p>");
+                h.append("<p class=\"muted\">No dispute records.</p>");
             }
             for (var de : data.getAsJsonArray("disputes")) {
                 JsonObject d = de.getAsJsonObject();
-                h.append("<h3>举报 #").append(d.get("id").getAsInt()).append("：")
+                h.append("<h3>Dispute #").append(d.get("id").getAsInt()).append(": ")
                         .append(Util.escapeHtml(d.get("taskTitle").getAsString())).append("</h3>");
-                h.append("<div class=\"fact\"><strong>已记录的事实：</strong>发起人 ")
-                        .append(Util.escapeHtml(d.get("reporter").getAsString())).append("，时间 ")
-                        .append(Util.escapeHtml(d.get("createdAt").getAsString())).append("。</div>");
+                h.append("<div class=\"fact\"><strong>Recorded facts: </strong>Filed by ")
+                        .append(Util.escapeHtml(d.get("reporter").getAsString())).append(", Time ")
+                        .append(Util.escapeHtml(d.get("createdAt").getAsString())).append(".</div>");
                 JsonObject facts = d.getAsJsonObject("facts");
                 JsonObject plan = facts.getAsJsonObject("plan");
-                h.append("<div class=\"fact\"><strong>举报时的分工：</strong>负责人 ").append(escaped(plan, "assignee"))
-                        .append(" · 署名 ");
+                h.append("<div class=\"fact\"><strong>Agreement at filing: </strong>Assignee ").append(escaped(plan, "assignee"))
+                        .append(" · Authors ");
                 List<String> names = new ArrayList<>();
                 for (var ae : plan.getAsJsonArray("authors")) {
                     JsonObject a = ae.getAsJsonObject();
                     names.add(escaped(a, "name") + " " + fmt(a.get("sharePct").getAsDouble()) + "%");
                 }
-                h.append(names.isEmpty() ? "资料缺失" : String.join("；", names)).append(" · 检查点 ")
-                        .append(escaped(plan, "checkpointAt")).append(" · 截止 ").append(escaped(plan, "currentDeadlineAt"));
+                h.append(names.isEmpty() ? "Record unavailable" : String.join("; ", names)).append(" · Checkpoint ")
+                        .append(escaped(plan, "checkpointAt")).append(" · Deadline ").append(escaped(plan, "currentDeadlineAt"));
                 if (plan.has("historyNote")) h.append(" · ").append(escaped(plan, "historyNote"));
                 h.append("</div>");
                 for (var re : facts.getAsJsonArray("reassignments")) {
                     JsonObject r = re.getAsJsonObject();
-                    h.append("<p>交接 ").append(escaped(r, "createdAt")).append(" · ").append(escaped(r, "fromName"))
+                    h.append("<p>Handoff ").append(escaped(r, "createdAt")).append(" · ").append(escaped(r, "fromName"))
                             .append(" → ").append(escaped(r, "toName")).append(" · ").append(escaped(r, "reason")).append("</p>");
                 }
                 for (var ce : facts.getAsJsonArray("dateChanges")) {
                     JsonObject dChange = ce.getAsJsonObject();
-                    h.append("<p>延期 ").append(escaped(dChange, "createdAt")).append(" · ")
+                    h.append("<p>Extension ").append(escaped(dChange, "createdAt")).append(" · ")
                             .append(escaped(dChange, "oldDeadline")).append(" → ").append(escaped(dChange, "newDeadline"))
                             .append(" · ").append(statusLabel(dChange.get("status").getAsString())).append(" · ")
                             .append(escaped(dChange, "reason")).append("</p>");
@@ -1062,19 +1062,19 @@ final class Reports {
                     appendExportArtifact(h, v, projectId, userId);
                 }
                 h.append("</tbody></table>");
-                h.append("<div class=\"statement\"><strong>成员陈述：</strong>")
-                        .append(Util.escapeHtml(d.get("reason").getAsString())).append("（举报发起）</div>");
+                h.append("<div class=\"statement\"><strong>Member statements: </strong>")
+                        .append(Util.escapeHtml(d.get("reason").getAsString())).append(" (Dispute filed)</div>");
                 for (var se : d.getAsJsonArray("statements")) {
                     JsonObject s = se.getAsJsonObject();
                     h.append("<div class=\"statement\"><strong>")
-                            .append("response".equals(s.get("kind").getAsString()) ? "被涉及者回应" : "未涉事者复核")
-                            .append(" · ").append(Util.escapeHtml(s.get("author").getAsString())).append("：</strong>")
+                            .append("response".equals(s.get("kind").getAsString()) ? "Responses from involved members" : "Independent reviews")
+                            .append(" · ").append(Util.escapeHtml(s.get("author").getAsString())).append(": </strong>")
                             .append(Util.escapeHtml(s.get("body").getAsString())).append("</div>");
                 }
                 if (d.getAsJsonArray("unresolved").isEmpty()) {
-                    h.append("<p class=\"muted\">该举报已标记结案。</p>");
+                    h.append("<p class=\"muted\">This dispute is closed.</p>");
                 } else {
-                    h.append("<div class=\"unresolved\"><strong>待解决的分歧：</strong><ul>");
+                    h.append("<div class=\"unresolved\"><strong>Unresolved disputes: </strong><ul>");
                     for (var ue : d.getAsJsonArray("unresolved")) {
                         h.append("<li>").append(Util.escapeHtml(ue.getAsString())).append("</li>");
                     }
@@ -1083,29 +1083,29 @@ final class Reports {
             }
         }
 
-        h.append("<h2>附录：可独立复算的原始计分数据</h2>");
-        h.append("<p class=\"muted\">下面的 JSON 只含已验收任务的分值、冻结署名比例和最终通过版本，不含任何个人投票选择、票数或投票时间。")
-                .append("可用它独立重算上方百分比。</p>");
+        h.append("<h2>Appendix: Source data for independent verification</h2>");
+        h.append("<p class=\"muted\">The following JSON contains the accepted task points, frozen shares and final accepted versions. Ballot details are private.")
+                .append(" Use it to recompute the percentages above.</p>");
         h.append("<pre id=\"data-appendix\">").append(Util.escapeHtml(data.getAsJsonObject("dataAppendix").toString()))
                 .append("</pre>");
         h.append("<script type=\"application/json\" id=\"report-data\">")
                 .append(Util.escapeJsonForHtml(data.toString())).append("</script>");
-        h.append("<p class=\"muted\">报告由 Anti-freerider 在本地生成。公开成果版本可以显示提交与最终验收日期；个人投票时间始终保密。</p>");
+        h.append("<p class=\"muted\">Report generated by Anti-freerider on this device. Shared versions show the submission and final acceptance dates. Individual ballot timestamps remain private.</p>");
         h.append("</body></html>");
         return h.toString();
     }
 
     private static void appendBudget(StringBuilder html, JsonObject budget) {
         int remaining = budget.get("remainingPoints").getAsInt();
-        html.append("<p class=\"muted\">计划 ").append(budget.get("plannedPoints").getAsInt())
-                .append(" 分 · 已分配 ").append(budget.get("assignedPoints").getAsInt()).append(" 分 · 剩余 ")
-                .append(remaining).append(" 分");
-        if (remaining < 0) html.append(" · 已超额 ").append(-remaining).append(" 分，请修订计划分");
+        html.append("<p class=\"muted\">Plan ").append(budget.get("plannedPoints").getAsInt())
+                .append(" points · Allocated ").append(budget.get("assignedPoints").getAsInt()).append(" points · Remaining ")
+                .append(remaining).append(" points");
+        if (remaining < 0) html.append(" · Over budget by ").append(-remaining).append(" points. Revise planned points");
         html.append("</p>");
     }
 
     private static String escaped(JsonObject obj, String key) {
-        return !obj.has(key) || obj.get(key).isJsonNull() ? "资料缺失" : Util.escapeHtml(obj.get(key).getAsString());
+        return !obj.has(key) || obj.get(key).isJsonNull() ? "Record unavailable" : Util.escapeHtml(obj.get(key).getAsString());
     }
 
     private static void appendExportArtifact(StringBuilder html, JsonObject version, int projectId, int userId)
@@ -1126,12 +1126,12 @@ final class Reports {
                         html.append("<p><a download=\"").append(escaped(version, "artifactName"))
                                 .append("\" href=\"data:application/pdf;base64,")
                                 .append(java.util.Base64.getEncoder().encodeToString(rs.getBytes("pdf")))
-                                .append("\">下载该版 PDF · ").append(escaped(version, "artifactName")).append("</a></p>");
+                                .append("\">Download this version’s PDF · ").append(escaped(version, "artifactName")).append("</a></p>");
                     }
                 }
             }
         } else if (!version.get("artifactName").getAsString().isBlank()) {
-            html.append("<p>文件名 ").append(escaped(version, "artifactName")).append("</p>");
+            html.append("<p>File name ").append(escaped(version, "artifactName")).append("</p>");
         }
         html.append("</td></tr>");
     }
@@ -1143,15 +1143,15 @@ final class Reports {
 
     private static String statusLabel(String status) {
         return switch (status) {
-            case "pending" -> "待确认";
-            case "accepted" -> "已通过";
-            case "rejected" -> "未通过";
-            case "withdrawn" -> "已撤回";
-            case "superseded" -> "已被新版取代";
-            case "approved" -> "已同意";
-            case "rejected_extension" -> "未同意";
-            case "open" -> "未结案";
-            case "closed" -> "已结案";
+            case "pending" -> "Pending review";
+            case "accepted" -> "Accepted";
+            case "rejected" -> "Rejected";
+            case "withdrawn" -> "Withdrawn";
+            case "superseded" -> "Superseded";
+            case "approved" -> "Approved";
+            case "rejected_extension" -> "Declined";
+            case "open" -> "Open";
+            case "closed" -> "Closed";
             default -> status;
         };
     }

@@ -113,7 +113,7 @@ def main():
         alice_page.click("#assistant-button")
         alice_page.wait_for_selector("#assistant-panel.is-open", timeout=5000)
         check(alice_page.locator("#ai-mode-badge").is_visible(), "assistant side panel opens with a mode badge")
-        alice_page.fill("#ai-question", "谁完成了问卷分析")
+        alice_page.fill("#ai-question", "Who completed the survey analysis")
         alice_page.click("#ai-form button[type=submit]")
         alice_page.wait_for_selector("#ai-answer .citation-link", timeout=15000)
         answer = alice_page.locator("#ai-answer").inner_text()
@@ -129,7 +129,7 @@ def main():
         alice_page.screenshot(path=str(OUT / "ai-citation.png"), full_page=False)
         close_task(alice_page)
 
-        alice_page.fill("#ai-question", "数据收集为什么延期")
+        alice_page.fill("#ai-question", "Why was data collection delayed")
         alice_page.click("#ai-form button[type=submit]")
         alice_page.wait_for_selector("#ai-answer .citation-link", timeout=15000)
         alice_page.locator("#ai-answer .citation-link").first.click()
@@ -173,7 +173,7 @@ def main():
         preview = alice_page.locator("#report-preview").inner_text()
         check("60 / 100 = 60%" in preview and "15 / 60 = 25%" in preview and "15" in preview,
               "browser report preview displays 60 / 100 = 60% and 15 / 60 = 25%")
-        check("暂无已验收贡献" in preview, "browser report preview shows the empty branch state")
+        check("No accepted contributions yet" in preview, "browser report preview shows the empty branch state")
         alice_page.locator("#report-preview details summary").first.click()
         alice_page.wait_for_timeout(250)
         check("Widget specification" in alice_page.locator("#report-preview").inner_text(),
@@ -187,7 +187,7 @@ def main():
         check(download_path.exists() and download_path.stat().st_size > 1000,
               "browser download produced a closing-report HTML file")
         downloaded = download_path.read_text(encoding="utf-8")
-        check("60%" in downloaded and "25%" in downloaded and "暂无已验收贡献" in downloaded,
+        check("60%" in downloaded and "25%" in downloaded and "No accepted contributions yet" in downloaded,
               "downloaded report contains the same recomputable numbers")
         alice_page.click(".project-item:has-text('Research Methods 2026')")
         wait_text(alice_page, "#project-title", "Research Methods 2026")
@@ -239,7 +239,7 @@ def main():
         print("[5] plan, submit, confirm, vote, reject and revise through the web UI")
         alice_page.click("#add-task-button")
         alice_page.wait_for_selector("#task-create-dialog[open]")
-        alice_page.fill("#create-task-form input[name=title]", "Browser revision deliverable / 网页修订成果")
+        alice_page.fill("#create-task-form input[name=title]", "Browser revision deliverable")
         alice_page.fill("#create-task-form textarea[name=description]",
                         "A ten-point task used only by the browser walkthrough.")
         alice_page.fill("#create-task-form input[name=points]", "10")
@@ -275,8 +275,8 @@ def main():
 
         submit_version(alice_page, "Version one was submitted for browser review.")
         alice_page.wait_for_selector(".submission-card", timeout=15000)
-        check(alice_page.locator(".submission-card .status-pill").first.inner_text() == "待确认",
-              "submitted browser version is 待确认")
+        check(alice_page.locator(".submission-card .status-pill").first.inner_text() == "Pending review",
+              "submitted browser version is Pending review")
         check(alice_page.locator(".detail-step").count() == 3,
               "task detail follows agreement → submission → criteria")
         check(alice_page.locator(".criteria-list li").count() >= 2,
@@ -296,23 +296,23 @@ def main():
 
         cara_page = member_pages["cara@demo.edu"]
         open_task(cara_page, browser_pid, browser_tid)
-        cara_page.get_by_text("匿名不同意 / Disagree").click()
+        cara_page.get_by_role("button", name="Disagree anonymously", exact=True).click()
         cara_page.wait_for_timeout(900)
-        check(cara_page.locator(".submission-card .status-pill").first.inner_text() == "待确认",
-              "one disagreement keeps the browser UI on 待确认")
+        check(cara_page.locator(".submission-card .status-pill").first.inner_text() == "Pending review",
+              "one disagreement keeps the browser UI on Pending review")
 
         dan_page = member_pages["dan@demo.edu"]
         open_task(dan_page, browser_pid, browser_tid)
-        dan_page.get_by_text("匿名同意 / Agree").click()
+        dan_page.get_by_role("button", name="Agree anonymously", exact=True).click()
         dan_page.wait_for_timeout(1200)
-        check(dan_page.locator(".submission-card .status-pill").first.inner_text() == "未通过",
-              "completed non-unanimous collection reveals 未通过")
+        check(dan_page.locator(".submission-card .status-pill").first.inner_text() == "Rejected",
+              "completed non-unanimous collection reveals Rejected")
 
         open_task(alice_page, browser_pid, browser_tid)
         submit_version(alice_page, "Version two answers the review and quotes the criterion.")
         alice_page.wait_for_timeout(800)
-        check(alice_page.locator(".submission-card .status-pill").first.inner_text() == "待确认",
-              "revised browser version starts its own 待确认 round")
+        check(alice_page.locator(".submission-card .status-pill").first.inner_text() == "Pending review",
+              "revised browser version starts its own Pending review round")
         ben_page.goto(BASE + f"/dashboard.html?project={browser_pid}&task={browser_tid}",
                       wait_until="networkidle")
         ben_page.wait_for_selector("#task-dialog[open]")
@@ -321,16 +321,16 @@ def main():
         cara_page.goto(BASE + f"/dashboard.html?project={browser_pid}&task={browser_tid}",
                        wait_until="networkidle")
         cara_page.wait_for_selector("#task-dialog[open]")
-        cara_page.get_by_text("匿名同意 / Agree").click()
+        cara_page.get_by_role("button", name="Agree anonymously", exact=True).click()
         cara_page.wait_for_timeout(800)
         dan_page.goto(BASE + f"/dashboard.html?project={browser_pid}&task={browser_tid}",
                       wait_until="networkidle")
         dan_page.wait_for_selector("#task-dialog[open]")
-        dan_page.get_by_text("匿名同意 / Agree").click()
+        dan_page.get_by_role("button", name="Agree anonymously", exact=True).click()
         dan_page.wait_for_timeout(1200)
         statuses = dan_page.locator(".submission-card .status-pill")
         check(statuses.count() >= 2, "both browser versions remain in the task")
-        check(statuses.first.inner_text() == "已验收", "revised browser version is accepted")
+        check(statuses.first.inner_text() == "Accepted", "revised browser version is accepted")
         dan_page.screenshot(path=str(OUT / "browser-revision-accepted.png"), full_page=False)
         close_task(dan_page)
         alice_page.goto(BASE + f"/dashboard.html?project={browser_pid}", wait_until="networkidle")
@@ -354,7 +354,7 @@ def main():
                 const task = await (await fetch(`/api/projects/${pairId}/tasks`, {
                     method: 'POST', headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({
-                        branchId, title: 'Warning render check / 两人组提示',
+                        branchId, title: 'Warning render check / Two-person team notice',
                         description: 'Pending single-author task used to render the inference warning.',
                         assigneeId: 1, points: 1,
                         checkpointAt: '2026-11-28T10:00:00Z', deadlineAt: '2026-11-30T10:00:00Z',
@@ -379,14 +379,14 @@ def main():
         alice_page.screenshot(path=str(OUT / "two-person-warning.png"), full_page=False)
         close_task(alice_page)
 
-        # A second active task makes the member row show "另有 N 项" with an expandable list.
+        # A second active task makes the member row show "Plus N items" with an expandable list.
         alice_page.evaluate(
             """async ({pairId}) => {
                 const board = await (await fetch(`/api/projects/${pairId}/board`)).json();
                 return await (await fetch(`/api/projects/${pairId}/tasks`, {
                     method: 'POST', headers: {'Content-Type':'application/json'},
                     body: JSON.stringify({
-                        branchId: board.branches[0].id, title: 'Second active task / 第二项在手任务',
+                        branchId: board.branches[0].id, title: 'Second active task / Second assigned task',
                         description: 'Makes the member row expandable.', assigneeId: 1, points: 1,
                         checkpointAt: '2026-11-29T10:00:00Z', deadlineAt: '2026-12-01T10:00:00Z',
                         expectedOutput: 'Note', acceptanceCriteria: 'Dated note.',
@@ -398,8 +398,8 @@ def main():
         alice_page.wait_for_timeout(700)
         alice_row = alice_page.locator(".member-row", has_text="Alice Chen")
         check(alice_row.locator(".member-more").count() == 1,
-              "a member with several active tasks gets an expandable 另有 N 项 row")
-        check("另有" in alice_row.locator(".member-more summary").inner_text(),
+              "a member with several active tasks gets an expandable Plus N items row")
+        check("Plus" in alice_row.locator(".member-more summary").inner_text(),
               "the multi-task row labels the additional count")
         alice_page.screenshot(path=str(OUT / "multi-task-member.png"), full_page=False)
 

@@ -1,44 +1,44 @@
-# 测试覆盖报告
+# Test coverage
 
-验收日期为 2026-11-22（香港时间）。测试从独立的干净候选检出运行。平台为 macOS 15.3.1 arm64、OpenJDK 25、Python 3.12.9、Playwright 1.65.2、Google Chrome 158.0.8127.36。Chrome 使用桌面和 390 px 手机视口。主套件用回环端口 18771、临时 SQLite、独立时钟和虚构成员。生命周期集成另用 18772。问答配置为空，页面和接口均观察到证据检索回退。
+The English release was tested on November 22, 2026 (Hong Kong time) from a separate checkout of the published project. The environment was macOS 15.3.1 arm64, OpenJDK 25, Python 3.12.9, Playwright 1.65.2 and Google Chrome 158.0.8127.36. The main suite used loopback port 26731, a fresh fictional team database and a controlled clock. Lifecycle tests used a separate server on port 26732. Model configuration was unset and the application reported evidence retrieval mode. The Java build used locally cached copies of its pinned dependencies.
 
-## 命令、结果和证据
+## Commands, results and evidence
 
-命令在候选提交 `5ff98ce26d5260f97746e70e3815c1e7801cd4ea` 的干净检出依次执行，完整步骤见[开发者手册](RUNBOOK.md#隔离验收)。报告提交只补文档，发布版本的源码及脚本与实测候选相同。
+See the [developer guide](RUNBOOK.md#isolated-verification) for a reproducible sequence. Replace its example ports with the ports above to match this run.
 
-| 顺序 | 层级 | 命令 | 本次观察 | 可重现证据 |
-| --- | --- | --- | --- | --- |
-| 1 | 构建 | `./scripts/build.sh` | Maven Central 下载 SQLite JDBC、Gson，Java 编译成功 | 终端构建输出 |
-| 2 | 单元 | `./scripts/test_unit.sh` | 5 个具名用例，18 个相等断言通过 | 终端 U-01～U-05 |
-| 3 | 本地启动 | `AF_PORT=18771 ./scripts/reset-demo.sh`、`AF_PORT=18771 AF_SEED_DEMO=1 ./scripts/start.sh`，明确指定验收检出的数据和时钟 | 从空库生成演示数据，HTTP 健康检查返回当前受控时间 | `GET /api/health` 与服务器启动日志 |
-| 4 | API 端到端 | `python scripts/verify_e2e.py` | 213 个检查通过 | `build/verification/results.json`、`main-report.html`、`handoff-report.html` |
-| 5 | 黑盒复算 | `python scripts/check_contributions.py` | 项目 60%、Alice 15 分和 25%、Dan 0 分和 0%，明细同口径且无选票字段 | `build/verification/recomputed-report.html`、终端复算值 |
-| 6 | 浏览器端到端 | `python scripts/browser_walkthrough.py` | 55 个检查通过；浏览器控制台及页面错误均为 0 | `build/verification/browser-results.json`、桌面及手机截图 |
-| 7 | API 专项 | `python scripts/verify_acceptance_fixes.py` | 46 个检查通过 | `build/verification/acceptance-fixes.json`、两份 PDF、撤回及计划修订导出 |
-| 8 | 浏览器专项 | `python scripts/browser_acceptance_fixes.py` | 21 个检查通过 | `build/verification/browser-acceptance-results.json`、撤回与群聊截图 |
-| 9 | SQLite 集成 | `python scripts/verify_lifecycle.py --port 18772` | 11 个具名测试通过；重启和合成旧库迁移一致 | `build/verification/lifecycle-results.json` 及生命周期启动日志 |
+| Layer | Command or operation | Observed result | Reproducible evidence |
+| --- | --- | --- | --- |
+| Build | `./scripts/build.sh` | Java compiled successfully. | Build output |
+| Unit | `./scripts/test_unit.sh` | Five named cases passed, covering allocations, denominators, incomplete and completed rounds and the reminder boundary. | U-01–U-05 in the terminal |
+| Local startup | Reset the isolated database and start with demo seeding, an explicit port, data directory and clock file. | The server seeded fictional members and returned the controlled time. | Startup log and GET /api/health |
+| API end-to-end | `python scripts/verify_e2e.py` | 213 checks passed. | build/verification/results.json, main-report.html and handoff-report.html |
+| Independent recomputation | `python scripts/check_contributions.py` | Project 60%, Alice 15 points and 25%, Dan 0 points and 0%. Export fields and denominators passed. | recomputed-report.html and terminal arithmetic |
+| Browser end-to-end | `python scripts/browser_walkthrough.py` | 55 checks passed, with zero browser console or page errors. | browser-results.json and desktop/mobile screenshots |
+| Focused API | `python scripts/verify_acceptance_fixes.py` | 46 checks passed. | acceptance-fixes.json, two PDFs, withdrawal and revised-plan exports |
+| Focused browser | `python scripts/browser_acceptance_fixes.py` | 21 checks passed. | browser-acceptance-results.json, withdrawal and chat screenshots |
+| SQLite lifecycle | `python scripts/verify_lifecycle.py --port 26732` | Eleven named cases passed, including restart and synthetic legacy migration. | lifecycle-results.json and server logs |
 
-上表的 5 项单元测试和 11 项生命周期测试是具名用例。API 和浏览器数字是各脚本执行的检查数，包含同一场景中的多个断言。独立复算记录为一项校验流程。SRS 定义 20 项需求，其追踪和具体断言见[需求覆盖报告](REQUIREMENTS_COVERAGE.md)。本次未采集代码行或分支覆盖率。测试库、日志、截图和导出留在本机隔离目录。
+The API and browser counts refer to individual checks and may include multiple assertions per scenario. The independent calculation is a separate procedure. The [requirements matrix](REQUIREMENTS_COVERAGE.md) maps the 20 requirements to implementation and evidence. Line and branch coverage were not measured. The temporary checkout holds generated databases, logs, screenshots and exports under build/verification or its test data directory.
 
-## 七项回归
+## Seven release regressions
 
-| 要求及需求 | 用例与预期 | 本次结果 |
+| Requirement | Scenario | Observed result |
 | --- | --- | --- |
-| 1 · FR-14 举报快照 | E2E [7b]，举报后把 Ben 交接给 Dan 并延期，原 Ben/Cara 仍可陈述且须回避 | 陈述成功，二人复核返回 403；Dan 复核通过；原截止和 60/40 与后续交接、延期同见于导出。 |
-| 2 · FR-04 交接与署名 | E2E [7b]、专项 UI，交接保留份额，独立变更未来署名 | 新负责人无法替作者确认；冻结旧版仍给 Ben 6 分、Cara 4 分；编辑表单显示前后。 |
-| 3 · FR-05 成果及附件 | 专项 API 拒绝空白、文件名、短说明、外链和伪 PDF；两个版本上传同名 PDF；另一会话读取 | 两版字节和 SHA-256 各自匹配；非成员返回 403；上传失败时手机表单内容保留。 |
-| 4 · FR-06～08、NFR-02 撤回 | 专项 API/UI 测试空原因、非作者、离组、草稿、旧票、终票并发、重投 | 旧轮保持待确认直到显式撤回，保留原因、日期与 PDF。新版从头收集。竞争观察到 撤回成功，另一请求 409，只有一个终态事件。重复终票无重复计分。 |
-| 5 · FR-15、NFR-01 证据匹配 | 《月壤光谱》缺失、歧义标题、选定两个版本、关联群聊植入唯一文本 | 缺失与歧义返回说明及空引用；引用只到选中版本，点击能定位；聊天标记和个人票均不进入质量证据。 |
-| 6 · FR-03、FR-09、NFR-02 预算 | 项目、分支各 10 分，已有 7 分，再试 7 分；降到 3 分；独立修订到 14 分 | 两级提示剩余 3、超出 4。降至 3 可保存；并发两项各 7 分只有一项写入。修订后两项通过，页面和导出均为 14/14 = 100%。 |
-| 7 · FR-12 群聊 | 桌面和独立手机会话，发送任务消息，收件人保留草稿、选择与位置；模拟旧响应延迟 | 接收耗时 3.513 秒，页面仅出现一次；任务链接正确；切换项目后，新群聊忽略旧项目的迟到响应。 |
+| FR-14 — dispute snapshot | File a dispute involving Ben and Cara, hand coordination to Dan and extend the deadline. | Original parties could respond but received 403 on review. Dan could review. Export retained the original deadline, 60/40 split and subsequent changes. |
+| FR-04 — handoff | Transfer coordination, then edit future authorship independently. | The new assignee could not confirm for another author. Ben and Cara retained 6 and 4 points. The editor showed the old and proposed shares. |
+| FR-05 — attachments | Try empty input, a filename, short status, URL, invalid or oversized PDF. Upload two same-name versions and download them in another session. | Invalid input was rejected. Each downloaded version matched its original bytes and SHA-256. Outsiders received 403. Failed mobile upload retained the form. |
+| FR-06–08, NFR-02 — withdrawal | Exercise blank reasons, ineligible members, departure, drafts, late votes, a new round and a race against the final ballot. | Explicit withdrawal preserved the old PDF, reason and date. The next round collected fresh responses. In the race one request succeeded and the other returned 409; one terminal event was recorded. Repeating the final vote earned no extra points. |
+| FR-15, NFR-01 — evidence | Ask about a missing lunar soil report, ambiguous names and two selected versions. Plant a unique marker in task chat. | Missing or ambiguous titles returned no citations. Selected citations opened the correct version. Chat and individual ballots stayed outside quality evidence. |
+| FR-03, FR-09, NFR-02 — budgets | Allocate 7 of 10 project and branch points. Try another 7, then 3. In a separate scenario revise the budget to 14. | Both limits reported 3 remaining and a shortfall of 4. Concurrent 7-point requests could only allocate once. After revision, the page and export showed 14/14 = 100%. |
+| FR-12 — chat | Send a task-linked message from desktop while another visible session has a draft and a reading position. Delay an old project response during switching. | The receiver saw one message within ten seconds without refreshing. The link, draft, selection and reading position were preserved; the old response did not appear in the new project. |
 
-## 关键业务观察
+## Additional observations
 
-- **贡献。** 从导出算 60/100 = 60%。Alice 在 20 分任务占 75% 得 15 分，其余已通过任务没有她的份额，故 15/60 = 25%。Dan 在全组已有 60 分时得 0 分且占 0%。整组未验收时项目为 0%，个人显示「暂无已验收贡献」。
-- **匿名验收。** 反对票先到时四个成员会话共享相同公共版本状态和事件，个人可操作项只针对当前会话。收齐前是待确认，v1 收齐后未通过，v2 通过只计一次。重复最终请求被拒。看板、任务事件、问答和导出检查覆盖可见票信息。
-- **提醒。** 首次实际提醒晚于原检查点。第 23 小时重启后仍私下；第 24 小时仅无回应任务升级。另一任务中途求助，仍显示受阻，无组内升级。刷新保留首次及升级时间，交接后私下事件仍只对原收件人可见。
-- **数据迁移。** 合成旧库以同一时间戳记录举报并随后交接。升级能根据事件顺序还原举报当时的 Ben/Cara 60/40，历史 `superseded` 版保持原状态和成果。通过 SQLite 完整性及外键检查，重启后快照与复核资格一致。
+- **Scoring.** The independent export calculation found 60/100 accepted points. Alice earned 20 × 75% = 15 points and no other awards, giving 15/60 = 25%. Dan had 0/60 = 0%. With no accepted work, a positive project budget gives 0% completion and the personal share displays **No accepted contributions yet**.
+- **Privacy.** Four members saw the same public version state and events after early dissent. Personal action eligibility was session-specific. v1 remained pending until all responses arrived, then closed rejected. The accepted revision scored once. The checks inspected the board, task events, evidence answers and exports.
+- **Reminders.** Initial evaluation happened after the checkpoint. Restart at hour 23 preserved the private reminder. At hour 24 only the silent task escalated. A task with an intervening help request remained blocked. Refresh preserved the timestamps; after handoff, the private event was visible only to its original recipient.
+- **Migration.** The synthetic database recorded a filing and subsequent handoff at the same timestamp. Event order recovered Ben/Cara’s filing-time 60/40 split. Historical superseded versions retained their state and artifacts. SQLite integrity and foreign-key checks passed. The recovered snapshot and review permissions survived restart.
 
-## 本次范围之外
+## Verification limits
 
-真实本机模型未连接，质量问答只使用该版已保存的正文。PDF 存取与保真使用合成文件。浏览器使用模拟手机视口，实体设备、Safari、Firefox、生产部署、压力测试、完整代码覆盖率及任意损坏旧库的恢复未验证。
+The run used saved submission text and local retrieval. A real model was not connected. PDF fidelity checks used synthetic files. Browser checks used desktop Chrome and an emulated mobile viewport. Physical phones, Safari, Firefox, production deployment, sustained load and recovery from arbitrary database corruption remain unverified.

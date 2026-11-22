@@ -13,7 +13,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import html as html_module
 import http.cookiejar
 import json
 import os
@@ -75,7 +74,7 @@ def main():
     match = re.search(r'<script type="application/json" id="report-data">(.*?)</script>', html, re.S)
     if not match:
         raise SystemExit("No report-data appendix found")
-    data = json.loads(html_module.unescape(match.group(1)))
+    data = json.loads(match.group(1))
     appendix = data["dataAppendix"]
     planned = appendix["projectPlannedPoints"]
     accepted = 0
@@ -103,7 +102,7 @@ def main():
             assert actual_share == share, (name, actual_share, share)
         zero = next(member for member in data["contribution"]["members"] if member["name"] == "Dan Zhou")
         assert zero["hasAccepted"] and zero["points"] == 0 and zero["sharePct"] == 0, zero
-        for visible in ("60%", "25%", "15", "暂无已验收贡献", "Delivered work", "Not yet delivered"):
+        for visible in ("60%", "25%", "15", "No accepted contributions yet", "Delivered work", "Not yet delivered"):
             if visible not in html:
                 raise SystemExit(f"Export is missing visible value: {visible}")
         print("Known-number assertions passed: 60%, Alice 15 points / 25%, Cara 40 points, Dan 0 points / 0%, empty branch labelled.")

@@ -1,54 +1,52 @@
-# 软件需求规格说明
+# Software requirements specification
 
-## 用户与范围
+## Users and scope
 
-首版面向参与同一门课程小组作业的学生。普通成员可在多个项目间切换；项目负责人能审批延期、交接负责人、编辑未来署名和修订计划。教师可以接收学生自行导出的材料。本地网页覆盖小组分工、协作、成果验收和结项。
+Students collaborate on course projects. Members can belong to several projects. Project owners decide extension requests, hand off tasks, change future authorship and revise budgets. Students choose what to export for their instructor. The first release runs locally in a browser.
 
-术语见[产品定稿](PLAN.md)。**负责人**协调任务，可以同时是作者。**署名作者**按约定份额分得通过版本的分值。**验收轮次**围绕一个固定成果版本。**私下提醒**只给当时的负责人，**待跟进**是项目可见的标记。**举报**是学生手动发起的独立记录。
+The **assignee** coordinates a task and may also be an author. **Authors** earn the frozen shares of an accepted version. A **review round** covers exactly one version. A **private reminder** goes to the assignee at the time it was issued. A **follow-up** is visible to the group. Members file **disputes** explicitly. See the [product plan](PLAN.md).
 
-| 故事 | 作为组员，我希望 |
+| Story | As a team member, I want to… |
 | --- | --- |
-| US-01 | 开始合作时建组或加入队友项目，并从公告栏找到谁负责什么。 |
-| US-02 | 开工前约定任务、作者份额、检查点和分值，变动后能回看旧约定。 |
-| US-03 | 安全查看成果、确认自己署名的版本、匿名评价其他成果，并在确需换稿时结束旧轮次。 |
-| US-04 | 在任务受阻、检查点未响应或需要延期时，找到具体帮助和跟进记录。 |
-| US-05 | 针对事实发起举报，由当事人回应、未涉事者复核，必要时自行交给老师。 |
-| US-06 | 询问成果和标准，并沿证据链接或导出报告独立复算贡献。 |
+| US-01 | Create or join a project and see who is responsible on the board. |
+| US-02 | Agree on tasks, shares, checkpoints and points, and retrieve the original agreement after a change. |
+| US-03 | Access deliverables, confirm my work, vote privately and end an open round when a replacement is necessary. |
+| US-04 | Find the support, follow-up or extension record when a task is blocked or late. |
+| US-05 | File a factual dispute, hear from the parties, obtain an independent review and choose what to send to the instructor. |
+| US-06 | Ask about work and criteria, follow citations and independently reproduce contribution totals. |
 
-## 功能需求
+## Functional requirements
 
-来源使用 [产品定稿](PLAN.md) 的段落名；「验收细则」指首版七项修复及发布验收要求。
+Sources refer to the sections of the product plan. The release acceptance cases also specify handoffs, attachments, budget handling, withdrawal, matching and chat delivery.
 
-| ID | 故事 | 来源 | 触发与可观察结果 | 验收方式 |
+| ID | Story | Source | Required behavior | Verification |
 | --- | --- | --- | --- | --- |
-| FR-01 | US-01 | 组队 | 注册、登录、退出创建或注销会话。只有当前项目成员可读取任务、附件、群聊和报告或执行项目操作。 | 独立会话登录，退出后访问受限；非成员请求被拒。 |
-| FR-02 | US-01 | 组队 | 创建项目生成邀请码；加入后在项目列表看到该项目，切换后公告栏和数据归属到该项目。普通成员退出后保留其历史署名及贡献。 | 四个账号创建、加入、切换、离组并查历史。 |
-| FR-03 | US-02 | 组队 | 创建任务时保存分支、负责人、作者、总和为 100% 的份额、检查点、截止日期、成果、标准和分值。分配超过项目或分支余额时提示差额，可降低任务分，或由项目负责人提交带原因的计划修订。 | 两级余额不足、降低分值、审批计划修订、并发分配。 |
-| FR-04 | US-02 | 组队、验收细则 | 项目负责人交接任务时保存原、新负责人、日期与原因。需要改变未来署名时，单独显示变更前后、校验 100% 总和并写入生效记录。冻结版本保持原份额。 | Ben/Cara 60/40 交接给 Dan；更改未来署名后复算旧版。 |
-| FR-05 | US-03 | 匿名验收、验收细则 | 提交含真实成果正文或一份有效 PDF 的版本时冻结成果、标准、分值、作者、份额和参与资格。说明、文件名及纯外链只作补充。当前成员可打开相应版本的附件。 | 空成果、伪文件或超限拒绝；两版同名 PDF 分别按字节核验。 |
-| FR-06 | US-03 | 匿名验收 | 作者亲自确认，作者提交即本人确认。冻结的非作者每人一票。全组共同署名时仍各自确认，并另加每人一票。仅一位非作者的两人组在投票前提示结论推断风险。 | 四人、两人、全员署名、重复投票和越权确认。 |
-| FR-07 | US-03 | 匿名验收 | 任何必需确认或匿名票缺席时，公共状态保持「待确认」，即使已有反对票。收齐后有反对即「未通过」，全票同意则「通过」，关闭收集并至多入账一次。 | 反对票先到、最后一票、修订通过、重复最后响应。 |
-| FR-08 | US-03 | 匿名验收 | 保存草稿、尝试重提或离组时，尚未结束的轮次继续待确认。仍在组内的本版作者可用非空原因撤回。旧版成果、原因和日期保留，停止收票且不计分。新版按当时的成员和署名从头收集。 | 离组、空原因、非作者撤回、迟到票、重提及并发终态。 |
-| FR-09 | US-06 | 匿名验收 | 项目和分支完成度用各自已验收分值除以各自计划分；个人分值为每个计分版本的任务分乘冻结份额后求和，个人占比再除以全组已验收分。历史超额按真实比例显示。 | 导出明细复算 60/100、15/60、零分和零分母，校验超额数据。 |
-| FR-10 | US-04 | 提醒、组队 | 项目公告栏可看当前任务、检查点、求助和所需支持。未解决的求助标记「受阻」，待确认的成果仍保有独立版次状态。 | 从任务创建求助，检查公告栏、任务状态与关闭支持后显示。 |
-| FR-11 | US-04 | 提醒 | 到检查点且无进展时，负责人收到首次私下提醒。从首次提醒起算 24 小时，期间的提交、负责人进度说明或求助会阻止升级。未回应到时显示「待跟进」。刷新或重启保留首次时间和升级记录。 | 受控时钟从迟于检查点的首次提醒开始，观察第 23 小时、满 24 小时、中途求助和重启。 |
-| FR-12 | US-04 | 组队、验收细则 | 成员可发送普通或任务关联消息。另一个可见会话自动看到一条新记录，保留未发草稿、所选任务和阅读位置。切换项目隔离旧响应。 | 双会话 10 秒内收取一次，验证任务链接、迟到响应。 |
-| FR-13 | US-04 | 提醒、组队 | 成员可提出延期并记录原因；项目负责人决定。记录旧截止、新截止、提议和决定日期以及处理结果。 | 批准和保留原截止，查看任务详情和导出。 |
-| FR-14 | US-05 | 人工举报 | 从任务人工举报时冻结当事人、份额及约定日期，后续交接与延期追加。原当事人可陈述并回避复核；未涉事成员可复核。历史资料不足时标注缺失并限制复核。 | 举报后交接和延期，分别用原作者及未涉事成员操作。 |
-| FR-15 | US-06 | AI 对话 | 在当前项目定位指定成果和版本，缺失时说明缺什么，多个候选时要求选择。结果按提交正文、冻结标准和验收记录给出可打开的引用，贡献数字取程序计算。 | 缺失标题、相似标题、v1/v2、跨项目和回退模式。 |
-| FR-16 | US-05、US-06 | 本地验收 | 成员可勾选预览与导出材料。贡献明细包含入账版本和原始计分数据，举报部分区分事实、陈述和争议。失败的验收不会触发举报。 | 预览、下载 HTML、从嵌入 JSON 独立计算。 |
+| FR-01 | US-01 | Teams | Registration and sign-in establish a session. Sign-out invalidates it. Only current members may access project tasks, attachments, chat, reports and operations. | Use separate sessions, sign out and attempt access as a non-member. |
+| FR-02 | US-01 | Teams | Creation supplies an invite code. Joining adds the project to the member’s list. Switching shows that project’s data. Leaving preserves past authorship and credit. | Create, join, switch and leave using four accounts. Inspect historical credit. |
+| FR-03 | US-02 | Teams | Store branch, assignee, authors, shares totaling 100%, checkpoint, deadline, output, criteria and points. An allocation that exceeds either budget identifies the shortfall. Reduce task points or let the owner revise planned points with a reason. | Test both budgets, reduced points, an owner revision and concurrent allocation. |
+| FR-04 | US-02 | Teams and release cases | Record old and new assignees, date and reason at handoff. Future authorship edits show both allocations, validate the total and record when the change takes effect. Preserve frozen shares. | Hand a Ben/Cara 60/40 task to Dan. Recompute a prior version after editing future shares. |
+| FR-05 | US-03 | Review and release cases | Require deliverable text or one valid PDF. Freeze the content, criteria, points, authors, shares and eligibility. A file name, note or bare URL alone is insufficient. Current members may open the version-specific attachment. | Reject empty, invalid and oversized input. Compare downloaded bytes of two same-name versions. |
+| FR-06 | US-03 | Review | Each author confirms personally. Submission confirms an author’s own participation. Each eligible non-author votes once. All-author teams require all confirmations plus separate anonymous ballots from everyone. Warn a two-person group’s sole non-author about inference before voting. | Exercise four-person, two-person and all-author cases, duplicate voting and unauthorized confirmation. |
+| FR-07 | US-03 | Review | A missing response keeps the public state pending even after dissent. Once all responses arrive, any dissent rejects the version. Unanimity accepts it. Close collection and score a task at most once. | Test early dissent, the last ballot, revision and a repeated final response. |
+| FR-08 | US-03 | Review | A draft, attempted resubmission or departure leaves an open round pending. A current author of that version may withdraw with a nonblank reason. Retain the deliverable, reason and date. Close voting without points. The next version collects fresh responses from its own participants. | Test departure, empty reason, non-author, late vote, resubmission and concurrent closure. |
+| FR-09 | US-06 | Contributions | Project and branch completion use their respective accepted and planned totals. Sum each accepted task’s points times the member’s frozen share. Divide by total accepted points for a personal percentage. Show historical overages accurately. | Recompute 60/100 and 15/60 from exports. Inspect zero points, missing denominators and historical overages. |
+| FR-10 | US-04 | Teams and reminders | The board shows current responsibilities, checkpoints, blockers and requested support. Unresolved support marks a task blocked. Each version retains its own review status. | Open a help request, inspect the board and task, then resolve it. |
+| FR-11 | US-04 | Reminders | Privately remind the assignee at an unanswered checkpoint. Start the 24-hour window at that first reminder. A submission, assignee progress note or help request suppresses escalation. Otherwise expose the follow-up. Preserve times and records across refresh and restart. | Delay the first evaluation, then test 23 hours, 24 hours, an intervening request and restart. |
+| FR-12 | US-04 | Teams and release cases | Send ordinary or task-linked chat. A second visible session receives each message once and retains its draft, selected task and reading position. Switching projects discards stale responses. | Use two sessions. Verify receipt within ten seconds, task navigation and a delayed response. |
+| FR-13 | US-04 | Teams and reminders | Members request an extension with a reason. The owner decides. Retain old and proposed deadlines, request and decision dates and the outcome. | Inspect the task and export after approval or retention of the original date. |
+| FR-14 | US-05 | Disputes | Filing freezes participants, shares and dates. Append later handoffs and extensions. Original parties may respond and must recuse themselves from review. Uninvolved members may review. Mark missing historical facts and restrict review if eligibility is uncertain. | File before handoff and extension. Exercise permissions as an original author and an independent member. |
+| FR-15 | US-06 | Evidence questions | Resolve a deliverable and version within the current project. Explain missing evidence and request clarification for ambiguous titles. Cite saved text, frozen criteria and public acceptance records. Use program-calculated contribution totals. | Test missing and similar titles, two versions, project isolation and fallback mode. |
+| FR-16 | US-05, US-06 | Local trial | Members select material to preview and export. Include the scored version and original values. Distinguish facts, statements and open disputes. Rejection alone never files a dispute. | Preview and download HTML and independently compute results from its JSON appendix. |
 
-### 验收状态和分母
+### States and denominators
 
-任务侧的「受阻」表示支持尚未解决，「待跟进」表示检查点提醒已达到升级条件。版本侧「待确认」「通过」「未通过」「已撤回」只描述该版验收。历史「已被新版取代」保留原数据语义。
+**Blocked** and **Needs follow-up** describe work on a task. **Pending review**, **Accepted**, **Rejected** and **Withdrawn** describe a version. Preserve historical **Superseded** records. A project with a positive budget and zero accepted points shows 0% completion. The same calculation applies to a branch. A legacy branch with zero planned points needs a budget before a percentage is meaningful. With zero accepted team points, members see **No accepted contributions yet**. Once the team has earned points, a member with zero points has a 0% share.
 
-项目有正计划分、已验收为 0 时显示 0%。分支有正计划分且无通过版本时，数值为 0%，报告也可标示暂无已验收贡献；历史分支计划为 0 时比例没有分母，应先修订计划。全组已验收为 0 时个人显示「暂无已验收贡献」；全组分数为正、其中某成员得 0 时，其个人占比为 0%。
+## Nonfunctional requirements
 
-## 非功能需求
-
-| ID | 故事 | 来源 | 触发与可观察结果 | 验收方式 |
+| ID | Stories | Source | Required behavior | Verification |
 | --- | --- | --- | --- | --- |
-| NFR-01 | US-03、US-06 | 匿名验收 | 界面、成员 API、任务通知只展示公共状态、作者署名、作者确认与公开版次时间；当前用户仅得到自己的可用操作。其他人的投票参与情况、选择、票数、投票时间均保留在内部。AI 上下文不含个人票和日常聊天；导出只含公共验收记录、计分及署名。 | 未收齐和终结后检查多成员出口、导出字段及问答上下文合约。 |
-| NFR-02 | US-02、US-03 | 匿名验收、验收细则 | 并发最后一票和撤回后，轮次只有一个终态且每任务最多一条计分记录。并发任务分配按两级余额串行校验。 | 用多个连接同时提交，检查 HTTP 返回、终态、计分行数和计划分。 |
-| NFR-03 | US-01、US-03 | 本地验收 | 暗色桌面与手机布局可以登录、切换项目、读任务与执行验收，页面不发生整体横向溢出。 | Chromium 桌面、390 px 手机视口的操作和截图。 |
-| NFR-04 | US-01、US-06 | 本地验收、AI 对话 | 服务监听本机回环地址，SQLite 重启后留存记录。真实模型须为配置的本机端点；回退及测试替身有可见标记。 | 干净启动、临时旧库升级、重启、询问回退与检查实际监听地址。 |
+| NFR-01 | US-03, US-06 | Review | Members see public status, authors, signatures and public version dates, plus their own available actions. Protect other members’ ballot participation, choices, counts and timestamps. Exclude ballots and chat from quality evidence. Export public acceptance, points and authorship. | Compare member views before and after closure. Inspect export fields and the evidence context. |
+| NFR-02 | US-02, US-03 | Review and release cases | A final ballot racing withdrawal produces one terminal state and at most one score per task. Concurrent task allocations must respect both budgets. | Use separate connections and inspect HTTP results, terminal events, score rows and allocated points. |
+| NFR-03 | US-01, US-03 | Local trial | Desktop and mobile layouts support sign-in, project switching, task inspection and review without page-level horizontal overflow. | Exercise desktop Chrome and a 390 px mobile viewport and capture screenshots. |
+| NFR-04 | US-01, US-06 | Local trial and evidence questions | Bind to loopback. Preserve SQLite records across restarts. An optional model uses a configured local endpoint. Label fallback and test-double responses. | Check startup, migration from a temporary legacy database, restart, the listening address and fallback responses. |

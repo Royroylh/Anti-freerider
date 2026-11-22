@@ -1,31 +1,31 @@
 # Anti-freerider
 
-Anti-freerider 帮课程小组回答三个问题。现在谁负责什么？哪项工作需要跟进？结项时，每个人的贡献如何复算？
+Anti-freerider helps students answer three questions during a group project. Who owns each task? Who needs help? How was each member’s final contribution calculated?
 
-小组先约定任务的负责人、作者份额、分值和验收标准，再提交固定版本。其他组员匿名验收，系统按通过版本的署名和分值生成可复算报告。公告栏可查看检查点和求助。组员也能在群聊关联任务、申请延期、交接负责人、人工举报，或通过证据问答打开相关成果。一次验收未通过不会自动举报个人。
+Agree on responsibilities, points and acceptance criteria before work starts. Submit a fixed version for review. Authors confirm their work and eligible members vote anonymously. The closing report links each member’s points to accepted versions and the agreed shares. The notice board tracks checkpoints and requests for help. Members can discuss tasks, request extensions, hand work over, open a dispute or follow a citation to the original evidence. Rejecting a submission does not open a dispute.
 
-[产品定稿](docs/PLAN.md) · [SRS](docs/SRS.md) · [设计说明](docs/DESIGN.md) · [用户手册](docs/USER_MANUAL.md) · [开发者手册](docs/RUNBOOK.md) · [需求覆盖](docs/REQUIREMENTS_COVERAGE.md) · [测试覆盖](docs/TEST_COVERAGE.md)
+[Product plan](docs/PLAN.md) · [Requirements](docs/SRS.md) · [Design](docs/DESIGN.md) · [User guide](docs/USER_MANUAL.md) · [Developer guide](docs/RUNBOOK.md) · [Requirements coverage](docs/REQUIREMENTS_COVERAGE.md) · [Test coverage](docs/TEST_COVERAGE.md)
 
-## 本地试用
+## Run locally
 
-需要 JDK 21 或更新版本、Bash、curl，首次构建需要访问 Maven Central。在新的检出中运行以下命令。
+Install JDK 21 or later, Bash and curl. The first build downloads two libraries from Maven Central. From a fresh checkout, run:
 
 ```bash
 ./scripts/build.sh
 AF_SEED_DEMO=1 ./scripts/start.sh
 ```
 
-打开 [本机登录页](http://127.0.0.1:8765/)。可用 `alice@demo.edu` 登录，密码为 `demo-pass-123`。另开独立浏览器会话，以 `ben@demo.edu`、`cara@demo.edu` 或 `dan@demo.edu` 登录同一小组。演示数据只在空库时生成。已有工作请继续使用原数据；需要可重复的演示时，在独立检出按[隔离测试步骤](docs/RUNBOOK.md#隔离验收)重建。
+Open the [local sign-in page](http://127.0.0.1:8765/). Sign in as `alice@demo.edu` with password `demo-pass-123`. Use separate browser profiles or private sessions for Ben, Cara and Dan (`ben@demo.edu`, `cara@demo.edu`, `dan@demo.edu`), who share the demo password. Seeding populates an empty database. To repeat the demo, follow the [isolated test procedure](docs/RUNBOOK.md#isolated-verification).
 
-## 分工到结项
+## From planning to a closing report
 
-1. **分工。** 建项目和分支，邀请队友，约定检查点、截止日期、预期成果、作者份额、标准与分值。交接可仅更换负责人，编辑未来署名是另一个操作。
-2. **固定版本提交。** 粘贴成果正文或上传一份最多 1 MiB 的 PDF。每次提交冻结成果、标准、分值、作者和本轮资格。
-3. **匿名验收。** 作者亲自确认，其他组员匿名投票。全组共同署名时，每人还需另投一票。收齐前显示「待确认」。仍在组内的本版作者可说明原因并撤回尚未结束的整轮。
-4. **可复算报告。** 每项任务最多入账一次。报告按冻结份额分配已验收分值，并附版本与原始计分数据。例如项目 60/100 = 60%，Alice 在 20 分任务占 75%，得 15 分，占全组已验收分值的 15/60 = 25%。
+1. Create a project and branches, invite teammates and agree on checkpoints, deadlines, deliverables, author shares, points and criteria. Changing the assignee and editing future authorship are separate actions.
+2. Paste the deliverable text or upload a PDF of up to 1 MiB. Submission freezes the deliverable, criteria, points, authors, shares and eligible participants for this version.
+3. Authors confirm and other eligible members vote anonymously. In an all-author team everyone also casts a separate ballot. The version stays pending until all required responses arrive. A current member who authored the version can give a reason and withdraw an open round.
+4. A task earns points at most once. The report includes the source values. For example, 60 accepted points out of 100 planned gives 60% completion. Alice’s 75% share of a 20-point task gives her 15 points, or 25% of the 60 accepted points.
 
-网页直接使用 `dist/` 中的手写 HTML、CSS 和 JavaScript。Java 服务监听本机回环地址，默认 SQLite 路径为 `data/af.db`。本次验收在桌面和手机 Chrome 视口运行，问答使用证据检索回退。
+The Java server binds to loopback, serves the handwritten HTML, CSS and JavaScript in `dist/`, and stores records in `data/af.db` by default. See the test report for desktop and mobile Chrome viewport results and the evidence-retrieval mode exercised.
 
-## 版权
+## Copyright
 
 This project, no matter the idea or the programs, is protected by copyright.

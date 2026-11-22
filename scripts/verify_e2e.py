@@ -15,7 +15,6 @@ JSON API the browser uses, and writes machine-readable evidence under build/veri
 """
 from __future__ import annotations
 
-import html as html_module
 import http.cookiejar
 import json
 import os
@@ -155,14 +154,14 @@ def assert_no_vote_fields(label: str, payload: object):
     for forbidden in ['"choice"', '"voter"', '"votes"', '"vote"', '"myVote"', '"disagree"', '"agree"',
                       "voteCount", "voterName"]:
         check(forbidden not in text, f"{label}: no {forbidden} field")
-    check("投票时间" not in text or "个人投票时间" in text, f"{label}: no private vote-time payload")
+    check("vote time" not in text or "individual vote time" in text, f"{label}: no private vote-time payload")
 
 
 def parse_export(html: str):
     match = re.search(r'<script type="application/json" id="report-data">(.*?)</script>', html, re.S)
     if not match:
         raise AssertionError("export is missing the recomputable JSON appendix")
-    return json.loads(html_module.unescape(match.group(1)))
+    return json.loads(match.group(1))
 
 
 def main():
@@ -195,7 +194,7 @@ def main():
     math_pid = project_id(alice, "Contribution Math 100")
     main_board = board(alice, main_pid)
     check(main_board["contribution"]["acceptedPoints"] == 0, "fresh demo starts with no accepted main points")
-    check(main_board["contribution"]["hasAccepted"] is False, "fresh demo shows 暂无已验收贡献")
+    check(main_board["contribution"]["hasAccepted"] is False, "fresh demo shows No accepted contributions yet")
     check(len(main_board["members"]) == 4, "main project has four members")
     check(len(main_board["branches"]) == 2, "main project has two branches")
     task_ids = {task["title"].split(" / ")[0]: task["id"] for task in main_board["tasks"]}
@@ -215,7 +214,7 @@ def main():
           "an early disagreement does not reveal a result before all votes")
     pending_board = board(alice, main_pid)
     pending_task = find_task(pending_board, t1)
-    check(pending_task["state"] == "pending_review", "board still shows 待确认 with a missing vote")
+    check(pending_task["state"] == "pending_review", "board still shows Pending review with a missing vote")
     check(pending_task.get("score") is None, "pending version has no score")
     assert_no_vote_fields("member board while pending", pending_board)
     task_path = f"/api/projects/{main_pid}/tasks/{t1}"
@@ -364,7 +363,7 @@ def main():
         "body": "Two interview groups are missing; consent forms are pending.",
         "neededSupport": "Dan to contact two classmates and confirm consent."
     })
-    check(supported["state"] == "blocked", "task with unresolved support shows 受阻")
+    check(supported["state"] == "blocked", "task with unresolved support shows Blocked")
     blocked_board = board(alice, main_pid)
     cara_row = find_member_row(blocked_board, 3)
     check(cara_row["status"] == "blocked", "member row shows blocked")
@@ -411,7 +410,7 @@ def main():
     for client in (ben, cara, dan):
         client.post("/api/projects/join", {"inviteCode": hand_project["inviteCode"]})
     handover = alice.post(f"/api/projects/{hand_pid}/tasks", {
-        "branchId": board(alice, hand_pid)["branches"][0]["id"], "title": "Handover check / 交接检查",
+        "branchId": board(alice, hand_pid)["branches"][0]["id"], "title": "Handover check / Handoff check",
         "assigneeId": 2, "points": 10, "checkpointAt": "2026-11-28T10:00:00Z",
         "deadlineAt": "2026-11-29T10:00:00Z", "expectedOutput": "Handover note",
         "acceptanceCriteria": "The handover note is dated.",
@@ -495,7 +494,7 @@ def main():
     check(len(pair_board["members"]) == 2, "invite code join makes Ben the second member")
     pair_branch = pair_board["branches"][0]["id"]
     pair_task = alice.post(f"/api/projects/{pair_id}/tasks", {
-        "branchId": pair_branch, "title": "Pair deliverable / 双人成果",
+        "branchId": pair_branch, "title": "Pair deliverable",
         "description": "Both members author and vote.", "assigneeId": 1, "points": 50,
         "checkpointAt": "2026-11-22T10:00:00Z", "deadlineAt": "2026-11-23T10:00:00Z",
         "expectedOutput": "Joint deliverable",
@@ -534,7 +533,7 @@ def main():
 
     set_clock("2026-11-21T10:45:00Z")
     pair_task2 = alice.post(f"/api/projects/{pair_id}/tasks", {
-        "branchId": pair_branch, "title": "Concurrent final vote check / 并发终票检查",
+        "branchId": pair_branch, "title": "Concurrent final vote check / Concurrent final ballot check",
         "description": "Both vote simultaneously.", "assigneeId": 1, "points": 10,
         "checkpointAt": "2026-11-22T10:00:00Z", "deadlineAt": "2026-11-23T10:00:00Z",
         "expectedOutput": "Joint artifact", "acceptanceCriteria": "Both agree.",
@@ -586,7 +585,7 @@ def main():
     reminder_board = board(alice, reminder_pid)
     reminder_branch = reminder_board["branches"][0]["id"]
     reminder_task = alice.post(f"/api/projects/{reminder_pid}/tasks", {
-        "branchId": reminder_branch, "title": "Literature check / 文献核对",
+        "branchId": reminder_branch, "title": "Literature check / Literature review",
         "description": "Reminder clock test.", "assigneeId": 4, "points": 10,
         "checkpointAt": "2026-11-25T10:00:00Z", "deadlineAt": "2026-11-27T10:00:00Z",
         "expectedOutput": "Literature notes",
@@ -618,7 +617,7 @@ def main():
     alice_view = board(alice, reminder_pid)
     dan_view = board(dan, reminder_pid)
     check(find_task(alice_view, reminder_task["id"]).get("followUp") is False,
-          "under 24 hours the group still does not see 待跟进")
+          "under 24 hours the group still does not see Needs follow-up")
     check(find_member_row(dan_view, 4).get("privateReminder") is not None,
           "private reminder remains visible to assignee under 24 hours")
     set_clock("2026-11-26T10:01:00Z")
@@ -626,8 +625,8 @@ def main():
     dan_view = board(dan, reminder_pid)
     followed = find_task(alice_view, reminder_task["id"])
     check(followed.get("followUp") is True and followed["state"] == "follow_up",
-          "after 24 hours the group sees 待跟进")
-    check(find_member_row(dan_view, 4)["status"] == "follow_up", "member row switches to 待跟进")
+          "after 24 hours the group sees Needs follow-up")
+    check(find_member_row(dan_view, 4)["status"] == "follow_up", "member row switches to Needs follow-up")
     with db() as connection:
         follow_row = connection.execute(
             "SELECT follow_up_at,resolved_at FROM reminders WHERE task_id=?", (reminder_task["id"],)).fetchone()
@@ -659,22 +658,22 @@ def main():
           "outsider cannot vote")
     check(eve.status_of("GET", f"/api/projects/{math_pid}/report/export") == 403,
           "outsider cannot export a report")
-    check(eve.status_of("POST", f"/api/projects/{math_pid}/ai", {"question": "谁完成了数据校验"}) == 403,
+    check(eve.status_of("POST", f"/api/projects/{math_pid}/ai", {"question": "Who completed data validation"}) == 403,
           "outsider cannot use project evidence Q&A")
 
     print("[11] evidence Q&A citations stay in the correct project")
-    who = alice.post(f"/api/projects/{main_pid}/ai", {"question": "谁完成了问卷分析"})
+    who = alice.post(f"/api/projects/{main_pid}/ai", {"question": "Who completed the survey analysis"})
     check("Questionnaire analysis report" in who["answer"] and "Ben Wu" in who["answer"],
           "who-completed answer cites the analysis report authors", who["answer"][:300])
     check(any(c["taskId"] == t3 and c["submissionId"] == t3sub["id"] for c in who["citations"]),
           "who-completed citation points to the accepted analysis version")
     check(all(c["projectId"] == main_pid for c in who["citations"]), "who-completed citations stay in main project")
-    no_context = alice.post(f"/api/projects/{main_pid}/ai", {"question": "这份报告达到了哪些标准"})
-    check(not no_context["citations"] and "请先打开" in no_context["answer"], "a contextual question requires a selected target")
+    no_context = alice.post(f"/api/projects/{main_pid}/ai", {"question": "Which criteria does this report meet"})
+    check(not no_context["citations"] and "Open a specific" in no_context["answer"], "a contextual question requires a selected target")
     chat_marker = "CHAT_ONLY_SAMPLING_METHOD_COULD_NOT_BE_TRACED"
     alice.post(f"/api/projects/{main_pid}/messages", {"body": chat_marker, "taskId": t3})
     criteria = alice.post(f"/api/projects/{main_pid}/ai", {
-        "question": "这份报告达到了哪些标准", "taskId": t3, "submissionId": t3sub["id"]})
+        "question": "Which criteria does this report meet", "taskId": t3, "submissionId": t3sub["id"]})
     check("Report states the sample and method" in criteria["answer"] and "Questionnaire analysis report" in criteria["answer"],
           "criteria answer quotes the frozen criteria line by line", criteria["answer"][:300])
     check(any(c["submissionId"] == t3sub["id"] for c in criteria["citations"]),
@@ -682,15 +681,15 @@ def main():
     check(criteria["chatIncluded"] is False and criteria["votesIncluded"] is False
           and chat_marker not in json.dumps(criteria),
           "task-linked chat and individual ballots stay outside quality evidence")
-    delay = alice.post(f"/api/projects/{main_pid}/ai", {"question": "数据收集为什么延期"})
+    delay = alice.post(f"/api/projects/{main_pid}/ai", {"question": "Why was data collection delayed"})
     check("Interviewees rescheduled" in delay["answer"] and "2026-11-24T10:00:00Z" in delay["answer"],
           "delay answer cites the recorded reason and original date", delay["answer"][:300])
     check(any(c["dateChangeId"] is not None for c in delay["citations"]),
           "delay citation points to the date-change event")
-    contribution_answer = alice.post(f"/api/projects/{main_pid}/ai", {"question": "当前贡献比例是多少"})
+    contribution_answer = alice.post(f"/api/projects/{main_pid}/ai", {"question": "What are the current contribution shares"})
     check("75%" in contribution_answer["answer"] or "90 / 120" in contribution_answer["answer"],
           "contribution answer uses the server-computed 75%", contribution_answer["answer"][:250])
-    math_ai = alice.post(f"/api/projects/{math_pid}/ai", {"question": "谁完成了数据校验"})
+    math_ai = alice.post(f"/api/projects/{math_pid}/ai", {"question": "Who completed data validation"})
     check("Dataset validation" in math_ai["answer"] and "Cara Lin" in math_ai["answer"],
           "second-project answer cites the math project's validation task", math_ai["answer"][:250])
     check(all(c["projectId"] == math_pid for c in math_ai["citations"]),
@@ -719,9 +718,9 @@ def main():
           "exported report displays the recomputed 60%, 25% and 15")
     check("60 / 100 = 60%" in math_html, "exported project completion shows its denominator")
     check("15 / 60 = 25%" in math_html, "exported personal share shows both denominators")
-    check("个人成果明细" in math_html and "Widget specification" in math_html and "= 15 分" in math_html,
+    check("Individual contributions" in math_html and "Widget specification" in math_html and "= 15 points" in math_html,
           "exported report lists per-member deliverables, versions and points")
-    check("暂无已验收贡献" in math_html, "export displays 暂无已验收贡献 for the empty branch")
+    check("No accepted contributions yet" in math_html, "export displays No accepted contributions yet for the empty branch")
     for forbidden in ["choice", "disagree", "voter", '"votes"', '"agree"']:
         check(forbidden not in math_html.lower(), f"math export omits {forbidden}")
     with db() as connection:
@@ -732,7 +731,7 @@ def main():
     (OUT / "main-report.html").write_text(main_html, encoding="utf-8")
     main_data = parse_export(main_html)
     check(len(main_data["disputes"]) == 1, "main export includes the manual report")
-    for section in ["已记录的事实", "成员陈述", "待解决的分歧"]:
+    for section in ["Recorded facts", "Member statements", "Unresolved disputes"]:
         check(section in main_html, f"main export separates {section}")
     check("Interviewees rescheduled" in main_html, "main export retains the delay reason")
     check("2026-11-24T10:00:00Z" in main_html, "main export retains the original deadline")
